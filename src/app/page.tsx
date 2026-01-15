@@ -112,8 +112,8 @@ const HomePage = () => {
         <header className="mb-8 md:mb-12">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
-              <h1 className="text-4xl sm:text-5xl font-bold">Palettes</h1>
-              <p className="text-lg text-base-content/70 mt-1">Find your next color inspiration.</p>
+              <h1 className="text-4xl sm:text-5xl font-bold">Chromalab</h1>
+              <p className="text-lg text-base-content/70 mt-1">自分だけのカラーパレットを作ろう</p>
             </div>
 
             {/* Auth Buttons / User Info */}
