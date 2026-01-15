@@ -27,7 +27,7 @@ const ToneSelector: React.FC<ToneSelectorProps> = ({ selectedToneId, onToneSelec
       try {
         const { data, error: dbError } = await supabase
           .from('tones')
-          .select('id, key, code, display_name, s_min, s_max, l_min, l_max, sort_order')
+          .select('id, key, code, display_name, category, s_min, s_max, l_min, l_max, sort_order')
           .eq('category', 'pccs')
           .order('sort_order');
 
