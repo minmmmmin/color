@@ -1,6 +1,18 @@
 // src/types/palette.ts
 
 /**
+ * The new, specific categories for color schemes.
+ */
+export type SchemeCategory =
+  | 'hue_based'
+  | 'tone_based'
+  | 'wheel_2'
+  | 'wheel_3'
+  | 'wheel_4'
+  | 'wheel_5'
+  | 'wheel_6';
+
+/**
  * Represents a color in the palette creation form state.
  */
 export type PaletteColor = {
@@ -19,7 +31,7 @@ export type Scheme = {
   id: string; // UUID
   key: string;
   display_name: string;
-  category: 'hue' | 'tone' | 'wheel';
+  category: SchemeCategory;
   min_colors: number;
   max_colors: number;
 };
@@ -48,7 +60,7 @@ export type Palette = {
   created_at?: string;
   user_id: string; // UUID
   is_official: boolean;
-  scheme: string; // The key of the scheme, e.g. 'triad'
+  scheme: SchemeCategory;
   title: string | null;
   description: string | null;
   // Joined data

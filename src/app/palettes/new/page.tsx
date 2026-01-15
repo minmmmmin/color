@@ -48,7 +48,7 @@ const NewPalettePage: React.FC = () => {
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Derived state for the color editor preview
   const editingColor = useMemo(() => {
     if (!editingTone) return { hex: '#808080', h: 0, s: 0, l: 50 };
@@ -84,9 +84,9 @@ const NewPalettePage: React.FC = () => {
     setEditingHue(currentColor.h ?? 0);
     // Note: We don't have the full Tone object here, so we can't pre-select it.
     // The user will have to re-select the tone.
-    setEditingTone(null); 
+    setEditingTone(null);
   };
-  
+
   const handleSetColor = () => {
     if (activeIndex === null || !editingTone) return;
     const newColors = [...colors];
@@ -116,10 +116,13 @@ const NewPalettePage: React.FC = () => {
       setIsSubmitting(false);
       return;
     }
-    
+
     let paletteId: string | null = null;
     try {
-      console.log('送信scheme:', selectedScheme.category); // デバッグ用ログ
+      console.log('送信scheme:', { // デバッグ用ログ
+        key: selectedScheme?.key,
+        category: selectedScheme?.category,
+      });
       const { data: paletteData, error: paletteError } = await supabase.from("palettes").insert({
         user_id: user.id, is_official: false, scheme: selectedScheme.category, title, description,
       }).select("id").single();
@@ -154,8 +157,8 @@ const NewPalettePage: React.FC = () => {
       <h1 className="text-3xl font-bold mb-6">配色を作る</h1>
       {error && <div className="alert alert-error mb-6">{error}</div>}
 
-      <div className="mb-8"><PalettePreviewBar colors={colors.map(c => ({...c, role:''}))} /></div>
-      
+      <div className="mb-8"><PalettePreviewBar colors={colors.map(c => ({ ...c, role: '' }))} /></div>
+
       <div className="space-y-12">
         <section>
           <h2 className="text-xl font-semibold mb-3">1) 技法</h2>
@@ -163,42 +166,42 @@ const NewPalettePage: React.FC = () => {
         </section>
 
         <section>
-            <h2 className="text-xl font-semibold mb-3">2) 色 (トーンで選ぶ)</h2>
-            <p className="text-sm text-base-content/70 mb-4">下の色スロットを選択して、トーンと色相で色を作成してください。</p>
+          <h2 className="text-xl font-semibold mb-3">2) 色 (トーンで選ぶ)</h2>
+          <p className="text-sm text-base-content/70 mb-4">下の色スロットを選択して、トーンと色相で色を作成してください。</p>
 
-            {/* Color Slots */}
-            <div className="flex flex-wrap gap-4 mb-8">
-                {colors.map((color, index) => (
-                    <div key={index} onClick={() => handleSelectSlot(index)} className={`cursor-pointer rounded-lg p-2 border-2 ${activeIndex === index ? 'border-primary' : 'border-base-300'}`}>
-                        <div className="w-16 h-16 rounded" style={{ backgroundColor: color.hex }}></div>
-                        <div className="text-xs text-center mt-1 font-mono">{color.hex}</div>
-                    </div>
-                ))}
-            </div>
+          {/* Color Slots */}
+          <div className="flex flex-wrap gap-4 mb-8">
+            {colors.map((color, index) => (
+              <div key={index} onClick={() => handleSelectSlot(index)} className={`cursor-pointer rounded-lg p-2 border-2 ${activeIndex === index ? 'border-primary' : 'border-base-300'}`}>
+                <div className="w-16 h-16 rounded" style={{ backgroundColor: color.hex }}></div>
+                <div className="text-xs text-center mt-1 font-mono">{color.hex}</div>
+              </div>
+            ))}
+          </div>
 
-            {/* Color Editor */}
-            {activeIndex !== null && (
-              <div className="p-4 border-2 border-primary rounded-lg space-y-6">
-                <h3 className="font-semibold">スロット {activeIndex + 1} の色を編集中...</h3>
-                <div className="grid md:grid-cols-2 gap-8 items-center">
-                    <div>
-                        <div className="flex justify-center items-center w-full h-40 rounded-lg mb-4" style={{ backgroundColor: editingColor.hex }}>
-                           <span className="p-2 bg-black/30 text-white rounded font-mono">{editingColor.hex}</span>
-                        </div>
-                         <HueSlider hue={editingHue} onHueChange={setEditingHue} />
-                    </div>
-                    <div>
-                        <h4 className="font-medium mb-2">トーンを選択</h4>
-                        <ToneSelector selectedToneId={editingTone?.id ?? null} onToneSelect={setEditingTone}/>
-                    </div>
+          {/* Color Editor */}
+          {activeIndex !== null && (
+            <div className="p-4 border-2 border-primary rounded-lg space-y-6">
+              <h3 className="font-semibold">スロット {activeIndex + 1} の色を編集中...</h3>
+              <div className="grid md:grid-cols-2 gap-8 items-center">
+                <div>
+                  <div className="flex justify-center items-center w-full h-40 rounded-lg mb-4" style={{ backgroundColor: editingColor.hex }}>
+                    <span className="p-2 bg-black/30 text-white rounded font-mono">{editingColor.hex}</span>
+                  </div>
+                  <HueSlider hue={editingHue} onHueChange={setEditingHue} />
                 </div>
-                <div className="text-center">
-                    <button className="btn btn-primary" onClick={handleSetColor} disabled={!editingTone}>
-                        この色にする
-                    </button>
+                <div>
+                  <h4 className="font-medium mb-2">トーンを選択</h4>
+                  <ToneSelector selectedToneId={editingTone?.id ?? null} onToneSelect={setEditingTone} />
                 </div>
               </div>
-            )}
+              <div className="text-center">
+                <button className="btn btn-primary" onClick={handleSetColor} disabled={!editingTone}>
+                  この色にする
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         <section>
