@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabaseClient';
 import { Palette, PaletteColorDB } from '@/types/palette';
 import PaletteCard from '@/components/PaletteCard';
 import Link from 'next/link';
+import { User } from '@supabase/supabase-js';
 
 const PaletteDetailPage = () => {
   const params = useParams();
@@ -15,6 +16,7 @@ const PaletteDetailPage = () => {
   const supabase = createClient();
 
   const [palette, setPalette] = useState<Palette | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -22,10 +24,14 @@ const PaletteDetailPage = () => {
   useEffect(() => {
     if (!id) return;
 
-    const fetchPalette = async () => {
+    const fetchData = async () => {
       setLoading(true);
       setError(null);
       try {
+        // Fetch both palette and user session in parallel
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
+
         const { data, error: fetchError } = await supabase
           .from('palettes')
           .select(`
@@ -36,17 +42,12 @@ const PaletteDetailPage = () => {
           .eq('id', id)
           .single();
 
-        if (fetchError) {
-          throw fetchError;
-        }
-
-        if (!data) {
-          throw new Error('Palette not found.');
-        }
+        if (fetchError) throw fetchError;
+        if (!data) throw new Error('Palette not found.');
 
         setPalette(data as Palette);
       } catch (e: unknown) {
-        const errorMessage = e instanceof Error ? e.message : 'Failed to fetch palette data.';
+        const errorMessage = e instanceof Error ? e.message : 'Failed to fetch data.';
         setError(errorMessage);
         console.error(e);
       } finally {
@@ -54,14 +55,20 @@ const PaletteDetailPage = () => {
       }
     };
 
-    fetchPalette();
+    fetchData();
   }, [id, supabase]);
-  
+
   const handleDelete = async () => {
+    // Guard: If not logged in, redirect to login page
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
     if (!window.confirm('このパレットを本当に削除しますか？この操作は取り消せません。')) {
       return;
     }
-    
+
     setIsDeleting(true);
     setError(null);
     try {
@@ -74,13 +81,13 @@ const PaletteDetailPage = () => {
         throw deleteError;
       }
 
-      // On success, redirect to home
       router.push('/');
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : '削除中にエラーが発生しました。';
       setError(errorMessage);
       console.error(e);
-      setIsDeleting(false);
+    } finally {
+      setIsDeleting(false); // Ensure this is always called
     }
   };
 
@@ -90,10 +97,10 @@ const PaletteDetailPage = () => {
 
   if (error) {
     return (
-        <div className="text-center p-12">
-            <div className="alert alert-error mb-4">{error}</div>
-            <Link href="/" className="btn btn-secondary">ホームに戻る</Link>
-        </div>
+      <div className="text-center p-12">
+        <div className="alert alert-error mb-4">{error}</div>
+        <Link href="/" className="btn btn-secondary">ホームに戻る</Link>
+      </div>
     );
   }
 
@@ -102,29 +109,33 @@ const PaletteDetailPage = () => {
   }
 
   const cardProps = {
+    id: palette.id,
     title: palette.title,
     schemeName: palette.schemes?.display_name,
     isOfficial: palette.is_official,
-    colors: (palette.palette_colors || []).sort((a,b) => a.role.localeCompare(b.role)),
+    colors: (palette.palette_colors || []).sort((a, b) => a.role.localeCompare(b.role)),
+    createdAt: palette.created_at,
   };
 
   return (
     <div className="container mx-auto max-w-lg p-4 pt-12">
-        <h1 className="text-2xl font-bold mb-2 text-center">{palette.title || 'Unnamed Palette'}</h1>
-        <p className="text-center text-base-content/70 mb-8">{palette.description || ''}</p>
-      
-        <PaletteCard {...cardProps} />
+      <h1 className="text-2xl font-bold mb-2 text-center">{palette.title || 'Unnamed Palette'}</h1>
+      <p className="text-center text-base-content/70 mb-8">{palette.description || ''}</p>
 
-        <div className="text-center mt-8 flex justify-center items-center gap-4">
-            <Link href="/" className="btn btn-ghost">ホームに戻る</Link>
-            <button 
-              className="btn btn-error btn-outline"
-              onClick={handleDelete}
-              disabled={isDeleting}
-            >
-              {isDeleting ? '削除中...' : '削除'}
-            </button>
-        </div>
+      <PaletteCard {...cardProps} />
+
+      <div className="text-center mt-8 flex justify-center items-center gap-4">
+        <Link href="/" className="btn btn-ghost">ホームに戻る</Link>
+        {user && user.id === palette.user_id && (
+          <button
+            className="btn btn-error btn-outline"
+            onClick={handleDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting ? '削除中...' : '削除'}
+          </button>
+        )}
+      </div>
     </div>
   );
 };
