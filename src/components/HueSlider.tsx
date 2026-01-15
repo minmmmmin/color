@@ -33,7 +33,7 @@ const HueSlider: React.FC<HueSliderProps> = ({ hue, onHueChange }) => {
         step={1}
         value={hue}
         onChange={handleSliderChange}
-        className="range range-secondary h-8"
+        className="range range-accent h-8"
         style={sliderBackground}
       />
       <div className="text-center mt-2 text-sm font-mono">

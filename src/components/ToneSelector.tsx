@@ -68,11 +68,11 @@ const ToneSelector: React.FC<ToneSelectorProps> = ({ selectedToneId, onToneSelec
         <button
           key={tone.id}
           onClick={() => handleSelect(tone)}
-          className={`btn btn-block h-16 ${selectedToneId === tone.id ? 'btn-secondary' : 'btn-outline'}`}
+          className={`btn btn-block h-16 ${selectedToneId === tone.id ? 'btn-accent' : 'btn'}`}
         >
           <div className="flex flex-col">
             <span className="text-xs font-mono">{tone.code}</span>
-            <span className="text-sm normal-case">{tone.display_name}</span>
+            <span className="text-[8px] normal-case">{tone.display_name}</span>
           </div>
         </button>
       ))}

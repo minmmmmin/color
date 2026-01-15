@@ -284,10 +284,10 @@ const NewPaletteForm: React.FC = () => {
       </div>
 
       <div className="mt-12 text-center flex justify-center gap-4">
-        <Link href="/" className="btn btn-wide">
+        <Link href="/" className="btn">
           キャンセル
         </Link>
-        <button className="btn btn-primary btn-wide" onClick={handleSave} disabled={isSubmitting}>
+        <button className="btn btn-primary" onClick={handleSave} disabled={isSubmitting}>
           {isSubmitting ? '保存中...' : (isEditMode ? '更新する' : '保存する')}
         </button>
       </div>
