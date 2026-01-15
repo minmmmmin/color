@@ -9,7 +9,7 @@ type HueSliderProps = {
 
 const HueSlider: React.FC<HueSliderProps> = ({ hue, onHueChange }) => {
   const snappedHue = useMemo(() => {
-    let snapped = Math.round(hue / 15) * 15;
+    const snapped = Math.round(hue / 15) * 15;
     return snapped === 360 ? 0 : snapped;
   }, [hue]);
 

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabaseClient';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Palette, PaletteColorDB } from '@/types/palette';
 import PaletteCard from '@/components/PaletteCard';
 import Link from 'next/link';
@@ -42,8 +43,9 @@ const PaletteDetailPage = () => {
         }
 
         setPalette(data as Palette);
-      } catch (e: any) {
-        setError(e.message || 'Failed to fetch palette data.');
+      } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : 'Failed to fetch palette data.';
+        setError(errorMessage);
         console.error(e);
       } finally {
         setLoading(false);

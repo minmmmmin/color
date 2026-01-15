@@ -51,8 +51,9 @@ const SchemeSelector: React.FC<SchemeSelectorProps> = ({
           return acc;
         }, {});
         setGroupedSchemes(groups);
-      } catch (err: any) {
-        setError(`技法の読み込みに失敗しました: ${err.message}`);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : '不明なエラー';
+        setError(`技法の読み込みに失敗しました: ${errorMessage}`);
         console.error(err);
       } finally {
         setLoading(false);

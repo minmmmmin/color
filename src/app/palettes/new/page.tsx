@@ -136,8 +136,9 @@ const NewPalettePage: React.FC = () => {
       if (colorsError) throw new Error(`色の保存に失敗: ${colorsError.message}`);
 
       router.push(`/palettes/${paletteId}`);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : '不明なエラー';
+      setError(errorMessage);
       if (paletteId) await supabase.from("palettes").delete().eq("id", paletteId);
     } finally {
       setIsSubmitting(false);

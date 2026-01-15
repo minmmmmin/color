@@ -36,7 +36,7 @@ export const hexToHsl = (hex: string): { h: number; s: number; l: number } | nul
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
 
-  let h = 0, s = 0, l = (max + min) / 2;
+  const l = (max + min) / 2;
 
   if (max === min) {
     // achromatic

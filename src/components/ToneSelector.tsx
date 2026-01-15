@@ -38,8 +38,9 @@ const ToneSelector: React.FC<ToneSelectorProps> = ({ selectedToneId, onToneSelec
         } else {
           setTones(data);
         }
-      } catch (err: any) {
-        setError(`Failed to fetch tones: ${err.message}`);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : '不明なエラー';
+        setError(`Failed to fetch tones: ${errorMessage}`);
         console.error(err);
       } finally {
         setLoading(false);
