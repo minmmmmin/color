@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabaseClient';
 import { Palette, SchemeCategory } from '@/types/palette';
 import PaletteCard, { PaletteCardProps } from '@/components/PaletteCard';
+import { User } from '@supabase/supabase-js';
 
 // Static definitions for the new scheme categories
 const schemeCategories = [
@@ -34,16 +35,30 @@ const HomePage = () => {
   const [palettes, setPalettes] = useState<Palette[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Auth State
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
 
   // Filter state using the new enum values
   const [filter, setFilter] = useState<string>(''); // Empty string for "All"
+
+  // Fetch user session on mount
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setIsLoadingUser(false);
+    };
+    getUser();
+  }, [supabase]);
 
   // Fetch palettes based on the filter
   useEffect(() => {
     const fetchPalettes = async () => {
       setLoading(true);
       setError(null);
-
+      
       let query = supabase
         .from('palettes')
         .select(`
@@ -73,18 +88,23 @@ const HomePage = () => {
     fetchPalettes();
   }, [filter, supabase]);
 
-
+  
   // Map palettes to card props using the new label map
   const paletteCards: PaletteCardProps[] = useMemo(() => {
     return palettes.map(p => ({
-      id: p.id,
-      title: p.title,
-      schemeName: schemeLabelMap[p.scheme] ?? p.scheme,
-      isOfficial: p.is_official,
-      colors: p.palette_colors ?? [],
-      createdAt: p.created_at,
+        id: p.id,
+        title: p.title,
+        schemeName: schemeLabelMap[p.scheme] ?? p.scheme,
+        isOfficial: p.is_official,
+        colors: p.palette_colors ?? [],
+        createdAt: p.created_at,
     }));
   }, [palettes]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null); // Clear user state
+  };
 
   return (
     <main className="min-h-screen bg-base-200 p-4 sm:p-8 md:p-12">
@@ -95,29 +115,43 @@ const HomePage = () => {
               <h1 className="text-4xl sm:text-5xl font-bold">Palettes</h1>
               <p className="text-lg text-base-content/70 mt-1">Find your next color inspiration.</p>
             </div>
-            <Link href="/palettes/new" className="btn btn-primary btn-md">
-              ＋ 新しく作る
-            </Link>
+            
+            {/* Auth Buttons / User Info */}
+            <div className="flex items-center gap-2">
+              {isLoadingUser ? (
+                <span className="loading loading-spinner loading-sm"></span>
+              ) : user ? (
+                <>
+                  <span className="text-sm font-medium hidden sm:block">{user.email}</span>
+                  <button onClick={handleSignOut} className="btn btn-ghost btn-sm">ログアウト</button>
+                </>
+              ) : (
+                <Link href="/login" className="btn btn-ghost btn-sm">ログイン</Link>
+              )}
+              <Link href="/palettes/new" className="btn btn-primary btn-md">
+                ＋ 新しく作る
+              </Link>
+            </div>
           </div>
 
           {/* New Filters */}
           <div className="mt-8 flex flex-col sm:flex-row gap-4">
             <div className="form-control w-full sm:w-64">
               <label className="label"><span className="label-text">カテゴリで絞り込み</span></label>
-              <select
+              <select 
                 className="select select-bordered"
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
               >
                 <option value="">全て</option>
                 {schemeCategories.map(c => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
+                    <option key={c.value} value={c.value}>{c.label}</option>
                 ))}
               </select>
             </div>
           </div>
         </header>
-
+        
         {loading ? (
           <div className="text-center"><span className="loading loading-spinner loading-lg"></span></div>
         ) : error ? (
@@ -142,4 +176,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-
