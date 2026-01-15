@@ -1,10 +1,5 @@
-// src/types/palette.ts
-
-/**
- * Represents a color scheme from the database.
- */
 export type Scheme = {
-  id: number;
+  id: string;
   key: string;
   display_name: string;
   category: 'hue' | 'tone' | 'wheel';
@@ -12,9 +7,6 @@ export type Scheme = {
   max_colors: number;
 };
 
-/**
- * Represents a single color in the palette creation form.
- */
 export type PaletteColor = {
   hex: string;
   h: number | null;

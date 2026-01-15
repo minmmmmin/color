@@ -5,14 +5,12 @@ import { Scheme } from '@/types/palette';
 import React, { useEffect, useState } from 'react';
 
 type SchemeSelectorProps = {
-  selectedSchemeId: number | null;
+  selectedSchemeId: string | null;
   onSchemeChange: (scheme: Scheme | null) => void;
   disabled?: boolean;
 };
 
-type GroupedSchemes = {
-  [category: string]: Scheme[];
-};
+type GroupedSchemes = Record<string, Scheme[]>;
 
 const SchemeSelector: React.FC<SchemeSelectorProps> = ({
   selectedSchemeId,
@@ -26,34 +24,35 @@ const SchemeSelector: React.FC<SchemeSelectorProps> = ({
 
   useEffect(() => {
     const fetchSchemes = async () => {
-      const supabase = createClient();
       setLoading(true);
+      setError(null);
+
+      const supabase = createClient();
+
       try {
-        const { data, error } = await supabase
+        const { data, error: dbError } = await supabase
           .from('schemes')
           .select('id, key, display_name, category, min_colors, max_colors')
           .order('category')
           .order('display_name');
 
-        if (error) {
-          throw error;
+        if (dbError) throw dbError;
+
+        if (!data || data.length === 0) {
+          setError("技法のデータが見つかりませんでした。'schemes' テーブルにデータが存在するか、RLSの設定を確認してください。");
+          return;
         }
 
-        setSchemes(data || []);
+        setSchemes(data as Scheme[]);
 
-        // Group schemes by category
-        const groups = (data || []).reduce<GroupedSchemes>((acc, scheme) => {
+        const groups = (data as Scheme[]).reduce<GroupedSchemes>((acc, scheme) => {
           const category = scheme.category || 'uncategorized';
-          if (!acc[category]) {
-            acc[category] = [];
-          }
-          acc[category].push(scheme);
+          (acc[category] ??= []).push(scheme);
           return acc;
         }, {});
         setGroupedSchemes(groups);
-
       } catch (err: any) {
-        setError(err.message || 'Failed to fetch schemes.');
+        setError(`技法の読み込みに失敗しました: ${err.message}`);
         console.error(err);
       } finally {
         setLoading(false);
@@ -64,16 +63,24 @@ const SchemeSelector: React.FC<SchemeSelectorProps> = ({
   }, []);
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const schemeId = parseInt(e.target.value, 10);
-    const selected = schemes.find(s => s.id === schemeId) || null;
+    const schemeId = e.target.value;             // ✅ parseIntしない
+    const selected = schemes.find((s) => s.id === schemeId) || null;
     onSchemeChange(selected);
   };
 
-  if (error) {
-    return <div className="text-error">Error: {error}</div>;
+  if (loading) {
+    return (
+      <select className="select select-bordered w-full" disabled>
+        <option>技法を読み込み中...</option>
+      </select>
+    );
   }
 
-  const categoryNames = {
+  if (error) {
+    return <div className="alert alert-error text-sm">{error}</div>;
+  }
+
+  const categoryNames: Record<string, string> = {
     hue: '色相ベース',
     tone: 'トーンベース',
     wheel: '色相環モデル',
@@ -84,14 +91,15 @@ const SchemeSelector: React.FC<SchemeSelectorProps> = ({
       className="select select-bordered w-full"
       value={selectedSchemeId ?? ''}
       onChange={handleSelectChange}
-      disabled={loading || disabled}
+      disabled={disabled}
     >
       <option disabled value="">
-        {loading ? '技法を読み込み中...' : '技法を選択してください'}
+        技法を選択してください
       </option>
+
       {Object.entries(groupedSchemes).map(([category, schemesInCategory]) => (
-        <optgroup key={category} label={categoryNames[category as keyof typeof categoryNames] || category}>
-          {schemesInCategory.map(scheme => (
+        <optgroup key={category} label={categoryNames[category] || category}>
+          {schemesInCategory.map((scheme) => (
             <option key={scheme.id} value={scheme.id}>
               {scheme.display_name}
             </option>
