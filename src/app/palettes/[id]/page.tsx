@@ -127,13 +127,16 @@ const PaletteDetailPage = () => {
       <div className="text-center mt-8 flex justify-center items-center gap-4">
         <Link href="/" className="btn btn-ghost">ホームに戻る</Link>
         {user && user.id === palette.user_id && (
-          <button
-            className="btn btn-error btn-outline"
-            onClick={handleDelete}
-            disabled={isDeleting}
-          >
-            {isDeleting ? '削除中...' : '削除'}
-          </button>
+          <>
+            <Link href={`/palettes/new?edit=${id}`} className="btn btn-ghost">編集</Link>
+            <button 
+              className="btn btn-error btn-outline"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? '削除中...' : '削除'}
+            </button>
+          </>
         )}
       </div>
     </div>
