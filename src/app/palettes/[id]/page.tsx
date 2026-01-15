@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabaseClient';
+import { createClient } from '@/lib/supabase/client';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Palette, PaletteColorDB } from '@/types/palette';
 import PaletteCard from '@/components/PaletteCard';

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabaseClient';
+import { createClient } from '@/lib/supabase/client';
 import { Palette, SchemeCategory } from '@/types/palette';
 import PaletteCard, { PaletteCardProps } from '@/components/PaletteCard';
 import { User } from '@supabase/supabase-js';
@@ -35,7 +35,7 @@ const HomePage = () => {
   const [palettes, setPalettes] = useState<Palette[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Auth State
   const [user, setUser] = useState<User | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
@@ -58,7 +58,7 @@ const HomePage = () => {
     const fetchPalettes = async () => {
       setLoading(true);
       setError(null);
-      
+
       let query = supabase
         .from('palettes')
         .select(`
@@ -88,16 +88,16 @@ const HomePage = () => {
     fetchPalettes();
   }, [filter, supabase]);
 
-  
+
   // Map palettes to card props using the new label map
   const paletteCards: PaletteCardProps[] = useMemo(() => {
     return palettes.map(p => ({
-        id: p.id,
-        title: p.title,
-        schemeName: schemeLabelMap[p.scheme] ?? p.scheme,
-        isOfficial: p.is_official,
-        colors: p.palette_colors ?? [],
-        createdAt: p.created_at,
+      id: p.id,
+      title: p.title,
+      schemeName: schemeLabelMap[p.scheme] ?? p.scheme,
+      isOfficial: p.is_official,
+      colors: p.palette_colors ?? [],
+      createdAt: p.created_at,
     }));
   }, [palettes]);
 
@@ -115,7 +115,7 @@ const HomePage = () => {
               <h1 className="text-4xl sm:text-5xl font-bold">Palettes</h1>
               <p className="text-lg text-base-content/70 mt-1">Find your next color inspiration.</p>
             </div>
-            
+
             {/* Auth Buttons / User Info */}
             <div className="flex items-center gap-2">
               {isLoadingUser ? (
@@ -128,7 +128,7 @@ const HomePage = () => {
               ) : (
                 <Link href="/login" className="btn btn-ghost btn-sm">ログイン</Link>
               )}
-              <Link href="/palettes/new" className="btn btn-primary btn-md">
+              <Link href="/palettes/new" className="btn btn-secondary btn-md">
                 ＋ 新しく作る
               </Link>
             </div>
@@ -138,20 +138,20 @@ const HomePage = () => {
           <div className="mt-8 flex flex-col sm:flex-row gap-4">
             <div className="form-control w-full sm:w-64">
               <label className="label"><span className="label-text">カテゴリで絞り込み</span></label>
-              <select 
+              <select
                 className="select select-bordered"
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
               >
                 <option value="">全て</option>
                 {schemeCategories.map(c => (
-                    <option key={c.value} value={c.value}>{c.label}</option>
+                  <option key={c.value} value={c.value}>{c.label}</option>
                 ))}
               </select>
             </div>
           </div>
         </header>
-        
+
         {loading ? (
           <div className="text-center"><span className="loading loading-spinner loading-lg"></span></div>
         ) : error ? (

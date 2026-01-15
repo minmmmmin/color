@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { User } from '@supabase/supabase-js';
 import { Scheme, PaletteColor, PaletteColorDB, Tone } from '@/types/palette';
-import { createClient } from '@/lib/supabaseClient';
+import { createClient } from '@/lib/supabase/client';
 import { isValidHex, hslToHex } from '@/lib/color';
 
 // Import Components
@@ -149,7 +149,7 @@ const NewPalettePage: React.FC = () => {
   if (!user) return (
     <div className="text-center p-12">
       <p className="mb-4">この機能を利用するにはログインが必要です。</p>
-      <Link href="/login" className="btn btn-primary">ログインページへ</Link>
+      <Link href="/login" className="btn btn-secondary">ログインページへ</Link>
     </div>
   );
 
@@ -173,7 +173,7 @@ const NewPalettePage: React.FC = () => {
           {/* Color Slots */}
           <div className="flex flex-wrap gap-4 mb-8">
             {colors.map((color, index) => (
-              <div key={index} onClick={() => handleSelectSlot(index)} className={`cursor-pointer rounded-lg p-2 border-2 ${activeIndex === index ? 'border-primary' : 'border-base-300'}`}>
+              <div key={index} onClick={() => handleSelectSlot(index)} className={`cursor-pointer rounded-lg p-2 border-2 ${activeIndex === index ? 'border-secondary' : 'border-base-300'}`}>
                 <div className="w-16 h-16 rounded" style={{ backgroundColor: color.hex }}></div>
                 <div className="text-xs text-center mt-1 font-mono">{color.hex}</div>
               </div>
@@ -182,7 +182,7 @@ const NewPalettePage: React.FC = () => {
 
           {/* Color Editor */}
           {activeIndex !== null && (
-            <div className="p-4 border-2 border-primary rounded-lg space-y-6">
+            <div className="p-4 border-2 border-secondary rounded-lg space-y-6">
               <h3 className="font-semibold">スロット {activeIndex + 1} の色を編集中...</h3>
               <div className="grid md:grid-cols-2 gap-8 items-center">
                 <div>
@@ -197,7 +197,7 @@ const NewPalettePage: React.FC = () => {
                 </div>
               </div>
               <div className="text-center">
-                <button className="btn btn-primary" onClick={handleSetColor} disabled={!editingTone}>
+                <button className="btn btn-secondary" onClick={handleSetColor} disabled={!editingTone}>
                   この色にする
                 </button>
               </div>
@@ -215,7 +215,7 @@ const NewPalettePage: React.FC = () => {
       </div>
 
       <div className="mt-12 text-center">
-        <button className="btn btn-primary btn-wide" onClick={handleSave} disabled={isSubmitting}>
+        <button className="btn btn-secondary btn-wide" onClick={handleSave} disabled={isSubmitting}>
           {isSubmitting ? '保存中...' : '保存する'}
         </button>
       </div>

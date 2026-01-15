@@ -1,6 +1,6 @@
 'use client';
 
-import { createClient } from '@/lib/supabaseClient';
+import { createClient } from '@/lib/supabase/client';
 import { Scheme } from '@/types/palette';
 import React, { useEffect, useState } from 'react';
 

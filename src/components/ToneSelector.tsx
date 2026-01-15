@@ -1,6 +1,6 @@
 'use client';
 
-import { createClient } from '@/lib/supabaseClient';
+import { createClient } from '@/lib/supabase/client';
 import { Tone } from '@/types/palette';
 import React, { useEffect, useState } from 'react';
 
@@ -21,7 +21,7 @@ const ToneSelector: React.FC<ToneSelectorProps> = ({ selectedToneId, onToneSelec
         setLoading(false);
         return;
       }
-      
+
       const supabase = createClient();
       setLoading(true);
       try {
@@ -68,7 +68,7 @@ const ToneSelector: React.FC<ToneSelectorProps> = ({ selectedToneId, onToneSelec
         <button
           key={tone.id}
           onClick={() => handleSelect(tone)}
-          className={`btn btn-block h-16 ${selectedToneId === tone.id ? 'btn-primary' : 'btn-outline'}`}
+          className={`btn btn-block h-16 ${selectedToneId === tone.id ? 'btn-secondary' : 'btn-outline'}`}
         >
           <div className="flex flex-col">
             <span className="text-xs font-mono">{tone.code}</span>
