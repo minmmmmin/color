@@ -36,11 +36,13 @@ export const hexToHsl = (hex: string): { h: number; s: number; l: number } | nul
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
 
-  const l = (max + min) / 2;
+  let h = 0, s = 0; // h と s をここで宣言
+  const l = (max + min) / 2; // l は const で問題ない
 
   if (max === min) {
     // achromatic
-    h = s = 0;
+    h = 0; // 個別に代入
+    s = 0; // 個別に代入
   } else {
     const d = max - min;
     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
