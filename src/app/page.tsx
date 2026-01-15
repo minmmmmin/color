@@ -123,10 +123,10 @@ const HomePage = () => {
               ) : user ? (
                 <>
                   <span className="text-sm font-medium hidden sm:block">{user.email}</span>
-                  <button onClick={handleSignOut} className="btn btn-ghost btn-sm">ログアウト</button>
+                  <button onClick={handleSignOut} className="btn btn-sm">ログアウト</button>
                 </>
               ) : (
-                <Link href="/login" className="btn btn-ghost btn-sm">ログイン</Link>
+                <Link href="/login" className="btn btn-primary btn-sm">ログイン</Link>
               )}
               <Link href="/palettes/new" className="btn btn-secondary btn-md">
                 ＋ 新しく作る

@@ -126,7 +126,7 @@ const NewPaletteForm: React.FC = () => {
       if (currentLength === newColorCount) {
         return currentColors;
       }
-      
+
       if (currentLength < newColorCount) {
         return [
           ...currentColors,
@@ -234,10 +234,10 @@ const NewPaletteForm: React.FC = () => {
       <div className="space-y-12">
         <section>
           <h2 className="text-xl font-semibold mb-3">1) 技法</h2>
-          <SchemeSelector 
+          <SchemeSelector
             schemes={schemes}
-            selectedSchemeId={selectedScheme?.id ?? null} 
-            onSchemeChange={setSelectedScheme} 
+            selectedSchemeId={selectedScheme?.id ?? null}
+            onSchemeChange={setSelectedScheme}
           />
         </section>
 
@@ -283,7 +283,10 @@ const NewPaletteForm: React.FC = () => {
         </section>
       </div>
 
-      <div className="mt-12 text-center">
+      <div className="mt-12 text-center flex justify-center gap-4">
+        <Link href="/" className="btn btn-wide">
+          キャンセル
+        </Link>
         <button className="btn btn-primary btn-wide" onClick={handleSave} disabled={isSubmitting}>
           {isSubmitting ? '保存中...' : (isEditMode ? '更新する' : '保存する')}
         </button>
