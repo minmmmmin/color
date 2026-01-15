@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     description: '配色を楽しむ・学ぶためのカラーツール',
     images: [
       {
-        url: 'src/app/ogp.png',
+        url: '/ogp.png',
         width: 1200,
         height: 1200,
         alt: 'Chromalab',
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     card: 'summary',
     title: 'Chromalab',
     description: '配色を楽しむ・学ぶためのカラーツール',
-    images: ['src/app/ogp.png'],
+    images: ['/ogp.png'],
   },
 }
 
