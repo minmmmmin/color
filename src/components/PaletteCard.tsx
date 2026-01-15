@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import PalettePreviewBar from './PalettePreviewBar';
 
-// Type definitions can be moved to a central types file e.g., src/types/palette.ts
+// This type is also defined in page.tsx, consider moving to a central types file
 export type PaletteColor = {
   hex: string;
   role: string;
@@ -11,10 +11,12 @@ export type PaletteColor = {
 };
 
 export type PaletteCardProps = {
+  id?: string;
   title?: string | null;
   schemeName?: string | null;
   isOfficial?: boolean;
   colors: PaletteColor[];
+  createdAt?: string;
 };
 
 const PaletteCard: React.FC<PaletteCardProps> = ({
@@ -22,6 +24,7 @@ const PaletteCard: React.FC<PaletteCardProps> = ({
   schemeName,
   isOfficial = false,
   colors,
+  createdAt,
 }) => {
   const [copiedHex, setCopiedHex] = useState<string | null>(null);
 
@@ -35,9 +38,11 @@ const PaletteCard: React.FC<PaletteCardProps> = ({
     }
   }, [copiedHex]);
 
-  const handleCopy = (hex: string) => {
+  const handleCopy = (e: React.MouseEvent, hex: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+
     if (!navigator.clipboard) {
-      // For non-secure contexts (e.g., http)
       console.error('Clipboard API not available.');
       return;
     }
@@ -49,8 +54,12 @@ const PaletteCard: React.FC<PaletteCardProps> = ({
 
   const isValidHex = (hex: string) => /^#[0-9A-F]{6}$/i.test(hex);
 
+  const formattedDate = createdAt 
+    ? new Date(createdAt).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })
+    : null;
+
   return (
-    <div className="card card-compact bg-base-100 shadow-md border border-base-300 transition-shadow hover:shadow-lg">
+    <div className="card card-compact bg-base-100 shadow-md border border-base-300 transition-shadow hover:shadow-lg h-full">
       <div className="card-body">
         {title && <h2 className="card-title !text-base font-medium">{title}</h2>}
         
@@ -62,6 +71,8 @@ const PaletteCard: React.FC<PaletteCardProps> = ({
             {isOfficial ? 'Official' : 'Personal'}
           </div>
         </div>
+        
+        {formattedDate && <p className="text-xs text-base-content/60 mt-1">{formattedDate}</p>}
 
         <div className="card-actions mt-2 flex flex-wrap gap-2 items-center">
           {colors.slice(0, 6).map((color) => ( // Show max 6 colors
@@ -72,7 +83,7 @@ const PaletteCard: React.FC<PaletteCardProps> = ({
                 data-tip={copiedHex === color.hex ? "Copied!" : `Copy ${color.hex}`}
               >
                 <button
-                  onClick={() => handleCopy(color.hex)}
+                  onClick={(e) => handleCopy(e, color.hex)}
                   className="btn btn-ghost btn-xs font-mono normal-case"
                 >
                   <span 
