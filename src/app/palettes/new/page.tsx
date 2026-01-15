@@ -1,15 +1,19 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Scheme, PaletteColor } from '@/types/palette';
-import { hexToHsl } from '@/lib/color';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { User } from '@supabase/supabase-js';
+import { Scheme, PaletteColor, PaletteColorDB, Tone } from '@/types/palette';
+import { createClient } from '@/lib/supabaseClient';
+import { isValidHex, hslToHex } from '@/lib/color';
 
 // Import Components
 import SchemeSelector from '@/components/SchemeSelector';
-import ColorInputRow from '@/components/ColorInputRow';
-import PalettePreviewBar from '@/components/PalettePreviewBar'; // Assuming this component exists
+import PalettePreviewBar from '@/components/PalettePreviewBar';
+import ToneSelector from '@/components/ToneSelector';
+import HueSlider from '@/components/HueSlider';
 
-// Utility to clamp a number between a min and max
 const clamp = (num: number, min: number, max: number) => Math.min(Math.max(num, min), max);
 
 const DEFAULT_COLOR_COUNT = 3;
@@ -17,159 +21,199 @@ const MIN_COLORS = 2;
 const MAX_COLORS = 6;
 
 const createDefaultColor = (): PaletteColor => ({
-  hex: '#FFFFFF',
-  h: 0,
-  s: 0,
-  l: 100,
-  ratio: null,
+  hex: '#FFFFFF', h: 0, s: 0, l: 100, ratio: null, tone_id: null
 });
 
 const NewPalettePage: React.FC = () => {
+  const router = useRouter();
+  const supabase = createClient();
+
+  // Auth State
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+
+  // Form State
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [selectedScheme, setSelectedScheme] = useState<Scheme | null>(null);
-  const [colors, setColors] = useState<PaletteColor[]>(() => 
+  const [colors, setColors] = useState<PaletteColor[]>(() =>
     Array.from({ length: DEFAULT_COLOR_COUNT }, createDefaultColor)
   );
 
-  const showRatioInputs = useMemo(() => 
-    selectedScheme?.key === 'dominant_color' || selectedScheme?.key === 'dominant_tone',
-    [selectedScheme]
-  );
+  // Color Editing State
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [editingTone, setEditingTone] = useState<Tone | null>(null);
+  const [editingHue, setEditingHue] = useState<number>(0);
+
+  // Submission State
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
-  const ratioSum = useMemo(() => {
-    if (!showRatioInputs) return 100;
-    return colors.reduce((acc, color) => acc + (color.ratio ?? 0), 0);
-  }, [colors, showRatioInputs]);
+  // Derived state for the color editor preview
+  const editingColor = useMemo(() => {
+    if (!editingTone) return { hex: '#808080', h: 0, s: 0, l: 50 };
+    const h = Math.round(editingHue / 15) * 15 % 360;
+    const s = Math.round((editingTone.s_min + editingTone.s_max) / 2);
+    const l = Math.round((editingTone.l_min + editingTone.l_max) / 2);
+    const hex = hslToHex(h, s, l);
+    return { hex, h, s, l };
+  }, [editingTone, editingHue]);
 
-
-  // Effect to adjust color array size and set default ratios when scheme changes
+  // Check user on mount
   useEffect(() => {
-    const numColors = selectedScheme
-      ? clamp(selectedScheme.min_colors, MIN_COLORS, MAX_COLORS)
-      : DEFAULT_COLOR_COUNT;
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user); setIsLoadingUser(false);
+    };
+    getUser();
+  }, [supabase]);
 
-    const newColors = Array.from({ length: numColors }, (_, i) => 
-      colors[i] || createDefaultColor()
-    );
-
-    // Set default ratios if applicable
-    if (selectedScheme?.key === 'dominant_color' || selectedScheme?.key === 'dominant_tone') {
-      if (numColors === 2) {
-        newColors[0].ratio = 70;
-        newColors[1].ratio = 30;
-      } else if (numColors === 3) {
-        newColors[0].ratio = 70;
-        newColors[1].ratio = 20;
-        newColors[2].ratio = 10;
-      } else if (numColors > 3) {
-        newColors[0].ratio = 60;
-        newColors[1].ratio = 20;
-        newColors[2].ratio = 10;
-        for (let i = 3; i < numColors; i++) {
-          newColors[i].ratio = i === 3 ? 10 : 0; // Simple default, can be improved
-        }
-        // Adjust last ratio to make sum 100
-        const currentSum = newColors.reduce((acc, c) => acc + (c.ratio ?? 0), 0);
-        const lastRatio = newColors[numColors-1].ratio ?? 0;
-        newColors[numColors - 1].ratio = Math.max(0, lastRatio + (100 - currentSum));
-      }
-    } else {
-        newColors.forEach(c => c.ratio = null);
-    }
-
+  // Adjust color count when scheme changes
+  useEffect(() => {
+    if (!selectedScheme) return;
+    const numColors = clamp(selectedScheme.min_colors, MIN_COLORS, MAX_COLORS);
+    if (numColors === colors.length) return;
+    const newColors = Array.from({ length: numColors }, (_, i) => colors[i] || createDefaultColor());
     setColors(newColors);
-  }, [selectedScheme]);
+  }, [selectedScheme, colors]);
 
-
-  const handleSchemeChange = (scheme: Scheme | null) => {
-    setSelectedScheme(scheme);
+  const handleSelectSlot = (index: number) => {
+    setActiveIndex(index);
+    // Initialize editor with the selected slot's values if they exist
+    const currentColor = colors[index];
+    setEditingHue(currentColor.h ?? 0);
+    // Note: We don't have the full Tone object here, so we can't pre-select it.
+    // The user will have to re-select the tone.
+    setEditingTone(null); 
   };
-
-  const handleColorChange = (index: number, newColor: PaletteColor) => {
+  
+  const handleSetColor = () => {
+    if (activeIndex === null || !editingTone) return;
     const newColors = [...colors];
-    newColors[index] = newColor;
+    newColors[activeIndex] = {
+      ...newColors[activeIndex], // keep ratio
+      hex: editingColor.hex,
+      h: editingColor.h,
+      s: editingColor.s,
+      l: editingColor.l,
+      tone_id: editingTone.id,
+    };
     setColors(newColors);
+    setActiveIndex(null); // Close editor after setting color
   };
 
-  // For PalettePreviewBar which expects a `role` property
-  const previewColors = colors.map(c => ({
-    ...c,
-    hex: c.h === null ? '#FFFFFF' : c.hex, // Use white for invalid colors
-    role: '', // Role is not used in this form
-  }));
+  const handleSave = async () => {
+    setError(null);
+    setIsSubmitting(true);
+
+    if (!user || !selectedScheme) {
+      setError("ログインと技法の選択は必須です。");
+      setIsSubmitting(false);
+      return;
+    }
+    if (colors.some(c => !isValidHex(c.hex) || c.h === null)) {
+      setError("すべての色スロットに有効な色を設定してください。");
+      setIsSubmitting(false);
+      return;
+    }
+    
+    let paletteId: string | null = null;
+    try {
+      console.log('送信scheme:', selectedScheme.category); // デバッグ用ログ
+      const { data: paletteData, error: paletteError } = await supabase.from("palettes").insert({
+        user_id: user.id, is_official: false, scheme: selectedScheme.category, title, description,
+      }).select("id").single();
+      if (paletteError) throw new Error(`パレットの保存に失敗: ${paletteError.message}`);
+      paletteId = paletteData.id;
+
+      const colorsToInsert: Omit<PaletteColorDB, 'id'>[] = colors.map((c, i) => ({
+        palette_id: paletteId!, role: `color${i + 1}`, hex: c.hex, h: c.h!, s: c.s!, l: c.l!, ratio: c.ratio, tone_id: c.tone_id,
+      }));
+      const { error: colorsError } = await supabase.from("palette_colors").insert(colorsToInsert);
+      if (colorsError) throw new Error(`色の保存に失敗: ${colorsError.message}`);
+
+      router.push(`/palettes/${paletteId}`);
+    } catch (e: any) {
+      setError(e.message);
+      if (paletteId) await supabase.from("palettes").delete().eq("id", paletteId);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isLoadingUser) return <div className="text-center p-12">読み込み中...</div>;
+  if (!user) return (
+    <div className="text-center p-12">
+      <p className="mb-4">この機能を利用するにはログインが必要です。</p>
+      <Link href="/login" className="btn btn-primary">ログインページへ</Link>
+    </div>
+  );
 
   return (
-    <div className="container mx-auto max-w-3xl p-4">
+    <div className="container mx-auto max-w-4xl p-4">
       <h1 className="text-3xl font-bold mb-6">配色を作る</h1>
+      {error && <div className="alert alert-error mb-6">{error}</div>}
 
-      {/* Preview Section */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-2">プレビュー</h2>
-        <PalettePreviewBar colors={previewColors} />
-      </div>
-
-      <div className="space-y-8">
-        {/* Step 1: Scheme */}
+      <div className="mb-8"><PalettePreviewBar colors={colors.map(c => ({...c, role:''}))} /></div>
+      
+      <div className="space-y-12">
         <section>
           <h2 className="text-xl font-semibold mb-3">1) 技法</h2>
-          <SchemeSelector
-            selectedSchemeId={selectedScheme?.id ?? null}
-            onSchemeChange={handleSchemeChange}
-          />
+          <SchemeSelector selectedSchemeId={selectedScheme?.id ?? null} onSchemeChange={setSelectedScheme} />
         </section>
 
-        {/* Step 2: Colors */}
         <section>
-          <div className="flex items-center justify-between mb-3">
-             <h2 className="text-xl font-semibold">2) 色</h2>
-             {showRatioInputs && ratioSum !== 100 && (
-                <div className="text-xs text-warning font-semibold">
-                    比率の合計が100%ではありません (現在 {ratioSum}%)
+            <h2 className="text-xl font-semibold mb-3">2) 色 (トーンで選ぶ)</h2>
+            <p className="text-sm text-base-content/70 mb-4">下の色スロットを選択して、トーンと色相で色を作成してください。</p>
+
+            {/* Color Slots */}
+            <div className="flex flex-wrap gap-4 mb-8">
+                {colors.map((color, index) => (
+                    <div key={index} onClick={() => handleSelectSlot(index)} className={`cursor-pointer rounded-lg p-2 border-2 ${activeIndex === index ? 'border-primary' : 'border-base-300'}`}>
+                        <div className="w-16 h-16 rounded" style={{ backgroundColor: color.hex }}></div>
+                        <div className="text-xs text-center mt-1 font-mono">{color.hex}</div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Color Editor */}
+            {activeIndex !== null && (
+              <div className="p-4 border-2 border-primary rounded-lg space-y-6">
+                <h3 className="font-semibold">スロット {activeIndex + 1} の色を編集中...</h3>
+                <div className="grid md:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <div className="flex justify-center items-center w-full h-40 rounded-lg mb-4" style={{ backgroundColor: editingColor.hex }}>
+                           <span className="p-2 bg-black/30 text-white rounded font-mono">{editingColor.hex}</span>
+                        </div>
+                         <HueSlider hue={editingHue} onHueChange={setEditingHue} />
+                    </div>
+                    <div>
+                        <h4 className="font-medium mb-2">トーンを選択</h4>
+                        <ToneSelector selectedToneId={editingTone?.id ?? null} onToneSelect={setEditingTone}/>
+                    </div>
                 </div>
-             )}
-          </div>
-          <div className="space-y-4">
-            {colors.map((color, index) => (
-              <ColorInputRow
-                key={index}
-                index={index}
-                color={color}
-                onColorChange={handleColorChange}
-                showRatio={showRatioInputs}
-              />
-            ))}
-          </div>
+                <div className="text-center">
+                    <button className="btn btn-primary" onClick={handleSetColor} disabled={!editingTone}>
+                        この色にする
+                    </button>
+                </div>
+              </div>
+            )}
         </section>
 
-        {/* Step 3: Memo */}
         <section>
           <h2 className="text-xl font-semibold mb-3">3) メモ (任意)</h2>
           <div className="space-y-4">
-            <input
-              type="text"
-              placeholder="配色のタイトル"
-              className="input input-bordered w-full"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-            <textarea
-              className="textarea textarea-bordered w-full"
-              placeholder="説明やメモ"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-            ></textarea>
+            <input type="text" placeholder="配色のタイトル" className="input input-bordered w-full" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <textarea className="textarea textarea-bordered w-full" placeholder="説明やメモ" value={description} onChange={(e) => setDescription(e.target.value)} rows={3}></textarea>
           </div>
         </section>
       </div>
 
-      {/* Action Button */}
       <div className="mt-12 text-center">
-        <button className="btn btn-primary btn-wide" disabled>
-          内容を確認
+        <button className="btn btn-primary btn-wide" onClick={handleSave} disabled={isSubmitting}>
+          {isSubmitting ? '保存中...' : '保存する'}
         </button>
-        <p className="text-xs text-base-content/60 mt-2">（このボタンはまだ機能しません）</p>
       </div>
     </div>
   );
