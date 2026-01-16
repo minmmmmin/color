@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { Palette, SchemeCategory } from '@/types/palette';
 import PaletteCard, { PaletteCardProps } from '@/components/PaletteCard';
-import { User } from '@supabase/supabase-js';
+import { useAuth } from '@/context/AuthContext';
 
 // Static definitions for the new scheme categories
 const schemeCategories = [
@@ -36,22 +36,16 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Auth State
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoadingUser, setIsLoadingUser] = useState(true);
+  // Auth State from Context
+  const { user, loading: isLoadingUser, signOut } = useAuth();
+
+  // Handlers
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   // Filter state using the new enum values
   const [filter, setFilter] = useState<string>(''); // Empty string for "All"
-
-  // Fetch user session on mount
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      setIsLoadingUser(false);
-    };
-    getUser();
-  }, [supabase]);
 
   // Fetch palettes based on the filter
   useEffect(() => {
@@ -101,10 +95,7 @@ const HomePage = () => {
     }));
   }, [palettes]);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null); // Clear user state
-  };
+
 
   return (
     <main className="min-h-screen bg-base-200 p-4 sm:p-8 md:p-12">
