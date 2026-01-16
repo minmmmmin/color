@@ -43,13 +43,13 @@ const SchemeSelector: React.FC<SchemeSelectorProps> = ({
   };
 
   const categoryOrder: SchemeCategory[] = [
-    'hue_based', 
-    'tone_based', 
-    'wheel_2', 
-    'wheel_3', 
+    'hue_based',
+    'tone_based',
+    'wheel_2',
+    'wheel_3',
     'wheel_4',
     'wheel_5',
-    'wheel_6'
+    'wheel_6',
   ];
 
   return (
@@ -63,16 +63,17 @@ const SchemeSelector: React.FC<SchemeSelectorProps> = ({
         {schemes.length === 0 ? '読み込み中...' : '技法を選択してください'}
       </option>
 
-      {categoryOrder.map(category => 
-        groupedSchemes[category] && (
-          <optgroup key={category} label={categoryLabels[category]}>
-            {groupedSchemes[category].map((scheme) => (
-              <option key={scheme.id} value={scheme.id}>
-                {scheme.display_name}
-              </option>
-            ))}
-          </optgroup>
-        )
+      {categoryOrder.map(
+        (category) =>
+          groupedSchemes[category] && (
+            <optgroup key={category} label={categoryLabels[category]}>
+              {groupedSchemes[category].map((scheme) => (
+                <option key={scheme.id} value={scheme.id}>
+                  {scheme.display_name}
+                </option>
+              ))}
+            </optgroup>
+          ),
       )}
     </select>
   );

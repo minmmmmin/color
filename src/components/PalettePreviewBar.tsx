@@ -16,14 +16,20 @@ const PalettePreviewBar: React.FC<PalettePreviewBarProps> = ({ colors }) => {
   }
 
   // Determine if all colors have a specific ratio. If not, divide them evenly.
-  const areAllRatiosDefined = colors.every(color => color.ratio !== null && color.ratio !== undefined);
+  const areAllRatiosDefined = colors.every(
+    (color) => color.ratio !== null && color.ratio !== undefined,
+  );
 
   return (
-    <div className="flex h-16 w-full overflow-hidden rounded-lg border border-base-300" title="Color Palette Preview">
+    <div
+      className="flex h-16 w-full overflow-hidden rounded-lg border border-base-300"
+      title="Color Palette Preview"
+    >
       {colors.map((color, index) => {
-        const width = areAllRatiosDefined && color.ratio
-          ? `${color.ratio}%`
-          : `${100 / colors.length}%`;
+        const width =
+          areAllRatiosDefined && color.ratio
+            ? `${color.ratio}%`
+            : `${100 / colors.length}%`;
 
         return (
           <div

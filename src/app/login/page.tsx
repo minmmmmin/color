@@ -1,13 +1,12 @@
-'use client'
+'use client';
 
-import { Auth } from '@supabase/auth-ui-react'
-import { ThemeSupa } from '@supabase/auth-ui-shared'
-import { createClient } from '@/lib/supabase/client'
-import { useEffect } from 'react'
+import { Auth } from '@supabase/auth-ui-react';
+import { ThemeSupa } from '@supabase/auth-ui-shared';
+import { createClient } from '@/lib/supabase/client';
+import { useEffect } from 'react';
 
 export default function AuthPage() {
-  const supabase = createClient()
-
+  const supabase = createClient();
 
   useEffect(() => {
     const {
@@ -22,7 +21,7 @@ export default function AuthPage() {
   }, [supabase]);
 
   const redirectUrl =
-    typeof window !== 'undefined' ? window.location.origin : ''
+    typeof window !== 'undefined' ? window.location.origin : '';
 
   return (
     <div className="w-full max-w-md p-8 space-y-3 rounded-xl bg-white shadow-lg">
@@ -34,5 +33,5 @@ export default function AuthPage() {
         redirectTo={redirectUrl ? `${redirectUrl}/auth/callback` : undefined}
       />
     </div>
-  )
+  );
 }

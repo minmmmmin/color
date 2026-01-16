@@ -28,7 +28,6 @@ const schemeLabelMap: Record<SchemeCategory, string> = {
   wheel_6: '6色環',
 };
 
-
 const HomePage = () => {
   const supabase = createClient();
 
@@ -55,14 +54,16 @@ const HomePage = () => {
 
       let query = supabase
         .from('palettes')
-        .select(`
+        .select(
+          `
           id,
           title,
           scheme,
           is_official,
           created_at,
           palette_colors (palette_id, hex, role)
-        `)
+        `,
+        )
         .order('created_at', { ascending: false });
 
       if (filter) {
@@ -82,10 +83,9 @@ const HomePage = () => {
     fetchPalettes();
   }, [filter, supabase]);
 
-
   // Map palettes to card props using the new label map
   const paletteCards: PaletteCardProps[] = useMemo(() => {
-    return palettes.map(p => ({
+    return palettes.map((p) => ({
       id: p.id,
       title: p.title,
       schemeName: schemeLabelMap[p.scheme] ?? p.scheme,
@@ -95,8 +95,6 @@ const HomePage = () => {
     }));
   }, [palettes]);
 
-
-
   return (
     <main className="min-h-screen bg-base-200 p-4 sm:p-8 md:p-12">
       <div className="max-w-7xl mx-auto">
@@ -104,7 +102,9 @@ const HomePage = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
               <h1 className="text-4xl sm:text-5xl font-bold">Chromalab</h1>
-              <p className="text-lg text-base-content/70 mt-1">自分だけのカラーパレットを作ろう</p>
+              <p className="text-lg text-base-content/70 mt-1">
+                自分だけのカラーパレットを作ろう
+              </p>
             </div>
 
             {/* Auth Buttons / User Info */}
@@ -113,11 +113,17 @@ const HomePage = () => {
                 <span className="loading loading-spinner loading-sm"></span>
               ) : user ? (
                 <>
-                  <span className="text-sm font-medium hidden sm:block">{user.email}</span>
-                  <button onClick={handleSignOut} className="btn btn-sm">ログアウト</button>
+                  <span className="text-sm font-medium hidden sm:block">
+                    {user.email}
+                  </span>
+                  <button onClick={handleSignOut} className="btn btn-sm">
+                    ログアウト
+                  </button>
                 </>
               ) : (
-                <Link href="/login" className="btn btn-primary btn-sm">ログイン</Link>
+                <Link href="/login" className="btn btn-primary btn-sm">
+                  ログイン
+                </Link>
               )}
               <Link href="/usage" className="btn btn-info btn-md">
                 使い方
@@ -131,15 +137,19 @@ const HomePage = () => {
           {/* New Filters */}
           <div className="mt-8 flex flex-col sm:flex-row gap-4">
             <div className="form-control w-full sm:w-64">
-              <label className="label"><span className="label-text">カテゴリで絞り込み</span></label>
+              <label className="label">
+                <span className="label-text">カテゴリで絞り込み</span>
+              </label>
               <select
                 className="select select-bordered"
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
               >
                 <option value="">全て</option>
-                {schemeCategories.map(c => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
+                {schemeCategories.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -147,18 +157,26 @@ const HomePage = () => {
         </header>
 
         {loading ? (
-          <div className="text-center"><span className="loading loading-spinner loading-lg"></span></div>
+          <div className="text-center">
+            <span className="loading loading-spinner loading-lg"></span>
+          </div>
         ) : error ? (
           <div className="alert alert-error">{error}</div>
         ) : paletteCards.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-xl">まだパレットがありません。</p>
-            <p className="mt-2 text-base-content/70">最初のパレットを作ってみましょう！</p>
+            <p className="mt-2 text-base-content/70">
+              最初のパレットを作ってみましょう！
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {paletteCards.map((palette) => (
-              <Link key={palette.id} href={`/palettes/${palette.id}`} className="block">
+              <Link
+                key={palette.id}
+                href={`/palettes/${palette.id}`}
+                className="block"
+              >
                 <PaletteCard {...palette} />
               </Link>
             ))}

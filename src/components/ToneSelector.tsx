@@ -9,14 +9,20 @@ type ToneSelectorProps = {
   onToneSelect: (tone: Tone | null) => void;
 };
 
-const ToneSelector: React.FC<ToneSelectorProps> = ({ selectedToneId, onToneSelect }) => {
+const ToneSelector: React.FC<ToneSelectorProps> = ({
+  selectedToneId,
+  onToneSelect,
+}) => {
   const [tones, setTones] = useState<Tone[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTones = async () => {
-      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      if (
+        !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+        !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      ) {
         setError('Supabase connection info is missing.');
         setLoading(false);
         return;
@@ -27,7 +33,9 @@ const ToneSelector: React.FC<ToneSelectorProps> = ({ selectedToneId, onToneSelec
       try {
         const { data, error: dbError } = await supabase
           .from('tones')
-          .select('id, key, code, display_name, category, s_min, s_max, l_min, l_max, sort_order')
+          .select(
+            'id, key, code, display_name, category, s_min, s_max, l_min, l_max, sort_order',
+          )
           .eq('category', 'pccs')
           .order('sort_order');
 
@@ -39,7 +47,8 @@ const ToneSelector: React.FC<ToneSelectorProps> = ({ selectedToneId, onToneSelec
           setTones(data);
         }
       } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : '不明なエラー';
+        const errorMessage =
+          err instanceof Error ? err.message : '不明なエラー';
         setError(`Failed to fetch tones: ${errorMessage}`);
         console.error(err);
       } finally {

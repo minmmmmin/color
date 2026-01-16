@@ -1,5 +1,5 @@
-import Image from "next/image";
-import Link from "next/link";
+import Image from 'next/image';
+import Link from 'next/link';
 
 function Step({
   n,
@@ -37,7 +37,6 @@ function Step({
         </div>
 
         <div className="rounded-2xl border border-base-300 bg-base-100 shadow-sm overflow-hidden">
-
           <div className="bg-base-200 group">
             <Image
               src={imageSrc}
@@ -49,7 +48,6 @@ function Step({
               priority={n === 1}
             />
           </div>
-
         </div>
       </div>
     </section>
@@ -62,7 +60,6 @@ export default function UsagePage() {
       <div className="max-w-7xl mx-auto">
         {/* Top bar */}
         <div className="mb-6 flex items-center justify-between">
-
           <div className="flex flex-wrap gap-2">
             <a href="#create" className="btn btn-outline btn-sm">
               作成
@@ -92,9 +89,9 @@ export default function UsagePage() {
           title="パレットを作る"
           desc="「＋ 新しく作る」から作成画面へ。技法を選んで保存します。"
           bullets={[
-            "技法（配色の作り方）を選ぶ",
-            "色を調整（hex入力でもOK）",
-            "タイトルを入れて保存",
+            '技法（配色の作り方）を選ぶ',
+            '色を調整（hex入力でもOK）',
+            'タイトルを入れて保存',
           ]}
           imageSrc="/usage/create.png"
           imageAlt="パレット作成画面"
@@ -106,9 +103,9 @@ export default function UsagePage() {
           title="一覧で見る"
           desc="公式パレットや自分のパレットが一覧に並びます。"
           bullets={[
-            "カテゴリで絞り込み",
-            "カードで配色を確認",
-            "自分のパレットは編集・削除できる",
+            'カテゴリで絞り込み',
+            'カードで配色を確認',
+            '自分のパレットは編集・削除できる',
           ]}
           imageSrc="/usage/browse.png"
           imageAlt="パレット一覧画面"
@@ -147,7 +144,6 @@ export default function UsagePage() {
             戻る
           </Link>
         </div>
-
       </div>
     </main>
   );

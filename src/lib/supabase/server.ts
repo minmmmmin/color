@@ -1,6 +1,6 @@
-import { createServerClient } from "@supabase/ssr";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
+import { createServerClient } from '@supabase/ssr';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { cookies } from 'next/headers';
 
 export async function createClient() {
   const cookieStore = await cookies();
@@ -23,7 +23,7 @@ export async function createClient() {
           }
         },
       },
-    }
+    },
   );
 }
 
@@ -36,6 +36,6 @@ export async function createServiceClient() {
         autoRefreshToken: false,
         persistSession: false,
       },
-    }
+    },
   );
 }

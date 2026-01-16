@@ -29,16 +29,20 @@ const PaletteDetailPage = () => {
       setError(null);
       try {
         // Fetch both palette and user session in parallel
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         setUser(user);
 
         const { data, error: fetchError } = await supabase
           .from('palettes')
-          .select(`
+          .select(
+            `
             *,
             schemes (display_name),
             palette_colors (*)
-          `)
+          `,
+          )
           .eq('id', id)
           .single();
 
@@ -47,7 +51,8 @@ const PaletteDetailPage = () => {
 
         setPalette(data as Palette);
       } catch (e: unknown) {
-        const errorMessage = e instanceof Error ? e.message : 'Failed to fetch data.';
+        const errorMessage =
+          e instanceof Error ? e.message : 'Failed to fetch data.';
         setError(errorMessage);
         console.error(e);
       } finally {
@@ -65,7 +70,11 @@ const PaletteDetailPage = () => {
       return;
     }
 
-    if (!window.confirm('このパレットを本当に削除しますか？この操作は取り消せません。')) {
+    if (
+      !window.confirm(
+        'このパレットを本当に削除しますか？この操作は取り消せません。',
+      )
+    ) {
       return;
     }
 
@@ -83,7 +92,8 @@ const PaletteDetailPage = () => {
 
       router.push('/');
     } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : '削除中にエラーが発生しました。';
+      const errorMessage =
+        e instanceof Error ? e.message : '削除中にエラーが発生しました。';
       setError(errorMessage);
       console.error(e);
     } finally {
@@ -99,7 +109,9 @@ const PaletteDetailPage = () => {
     return (
       <div className="text-center p-12">
         <div className="alert alert-error mb-4">{error}</div>
-        <Link href="/" className="btn btn-secondary">ホームに戻る</Link>
+        <Link href="/" className="btn btn-secondary">
+          ホームに戻る
+        </Link>
       </div>
     );
   }
@@ -113,22 +125,32 @@ const PaletteDetailPage = () => {
     title: palette.title,
     schemeName: palette.schemes?.display_name,
     isOfficial: palette.is_official,
-    colors: (palette.palette_colors || []).sort((a, b) => a.role.localeCompare(b.role)),
+    colors: (palette.palette_colors || []).sort((a, b) =>
+      a.role.localeCompare(b.role),
+    ),
     createdAt: palette.created_at,
   };
 
   return (
     <div className="container mx-auto max-w-lg p-4 pt-12">
-      <h1 className="text-2xl font-bold mb-2 text-center">{palette.title || 'Unnamed Palette'}</h1>
-      <p className="text-center text-base-content/70 mb-8">{palette.description || ''}</p>
+      <h1 className="text-2xl font-bold mb-2 text-center">
+        {palette.title || 'Unnamed Palette'}
+      </h1>
+      <p className="text-center text-base-content/70 mb-8">
+        {palette.description || ''}
+      </p>
 
       <PaletteCard {...cardProps} />
 
       <div className="text-center mt-8 flex justify-center items-center gap-4">
-        <Link href="/" className="btn btn-primary">ホームに戻る</Link>
+        <Link href="/" className="btn btn-primary">
+          ホームに戻る
+        </Link>
         {user && user.id === palette.user_id && (
           <>
-            <Link href={`/palettes/new?edit=${id}`} className="btn">編集</Link>
+            <Link href={`/palettes/new?edit=${id}`} className="btn">
+              編集
+            </Link>
             <button
               className="btn btn-error btn-outline"
               onClick={handleDelete}

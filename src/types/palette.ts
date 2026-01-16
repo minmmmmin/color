@@ -40,16 +40,16 @@ export type Scheme = {
  * Represents a PCCS tone from the 'tones' database table.
  */
 export type Tone = {
-    id: string; // UUID
-    key: string;
-    code: string;
-    display_name: string;
-    category: string;
-    s_min: number;
-    s_max: number;
-    l_min: number;
-    l_max: number;
-    sort_order: number;
+  id: string; // UUID
+  key: string;
+  code: string;
+  display_name: string;
+  category: string;
+  s_min: number;
+  s_max: number;
+  l_min: number;
+  l_max: number;
+  sort_order: number;
 };
 
 /**
@@ -84,4 +84,3 @@ export type PaletteColorDB = {
   ratio: number | null;
   tone_id: string | null;
 };
-
