@@ -73,7 +73,7 @@ const PaletteCard: React.FC<PaletteCardProps> = ({
 
         <div className="flex justify-between items-center mt-3">
           <p className="font-semibold text-base-content/90 text-sm">
-            {schemeName || 'Unnamed Scheme'}
+            {schemeName || ' '}
           </p>
           <div
             className={`badge badge-sm ${isOfficial ? 'badge-secondary' : 'badge-ghost'}`}
