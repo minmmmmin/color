@@ -78,9 +78,6 @@ export default function UsagePage() {
           <h1 className="text-4xl sm:text-5xl font-bold mb-3">
             Chromalab の使い方
           </h1>
-          <p className="text-lg text-base-content/70 leading-relaxed max-w-3xl">
-            ざっくり2ステップ。作って、一覧で見返す。
-          </p>
         </div>
 
         <div id="create" />
