@@ -39,8 +39,8 @@ const HomePage = () => {
   const { user, loading: isLoadingUser, signOut } = useAuth();
 
   // Handlers
-  const handleSignOut = async () => {
-    await signOut();
+  const handleSignOut = () => {
+    (document.getElementById('logout-modal') as HTMLDialogElement)?.showModal();
   };
 
   // Filter state using the new enum values
@@ -97,6 +97,31 @@ const HomePage = () => {
 
   return (
     <main className="min-h-screen bg-base-200 p-4 sm:p-8 md:p-12">
+      <dialog id="logout-modal" className="modal">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">ログアウト</h3>
+          <p className="py-4">本当にログアウトしますか？</p>
+          <div className="modal-action">
+            <form method="dialog">
+              <button className="btn btn-ghost mr-2">キャンセル</button>
+            </form>
+            <button
+              className="btn btn-error"
+              onClick={async () => {
+                (
+                  document.getElementById('logout-modal') as HTMLDialogElement
+                )?.close();
+                await signOut();
+              }}
+            >
+              ログアウト
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
       <div className="max-w-7xl mx-auto">
         <header className="mb-8 md:mb-12">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
