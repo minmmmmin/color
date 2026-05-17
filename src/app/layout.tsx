@@ -13,11 +13,12 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  (process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000');
+const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.VERCEL_URL;
+const siteUrl = rawSiteUrl
+  ? rawSiteUrl.startsWith('http')
+    ? rawSiteUrl
+    : `https://${rawSiteUrl}`
+  : 'http://localhost:3000';
 
 export const metadata: Metadata = {
   title: 'Chromalab',
