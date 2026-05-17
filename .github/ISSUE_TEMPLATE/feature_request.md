@@ -1,9 +1,9 @@
 ---
 name: 機能要望
 about: 新機能や改善を提案してください
-title: "[Feature] "
+title: '[Feature] '
 labels: enhancement
-assignees: ""
+assignees: ''
 ---
 
 ## 提案内容

@@ -1,9 +1,9 @@
 ---
 name: 質問・相談
 about: 使い方の質問や技術的な相談
-title: "[Question] "
+title: '[Question] '
 labels: question
-assignees: ""
+assignees: ''
 ---
 
 ## 質問内容
