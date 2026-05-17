@@ -32,18 +32,21 @@ Chromalabは、直感的な操作で美しい配色を作成できるツール�
 ## ローカルでの実行方法
 
 1. **リポジトリのクローン**
+
    ```bash
    git clone <repository-url>
    cd color-study
    ```
 
 2. **依存関係のインストール**
+
    ```bash
    npm install
    ```
 
 3. **環境変数の設定**
    `.env.local`ファイルを作成し、Supabaseの接続情報を設定します。
+
    ```bash
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
