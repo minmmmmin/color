@@ -13,13 +13,19 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  ?? (process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : 'http://localhost:3000');
+
 export const metadata: Metadata = {
   title: 'Chromalab',
-  description: '配色を楽しむ・学ぶためのカラーツール',
+  description: '配色を学ぶためのカラーツール',
+  metadataBase: new URL(siteUrl),
 
   openGraph: {
     title: 'Chromalab',
-    description: '配色を楽しむ・学ぶためのカラーツール',
+    description: '配色を学ぶためのカラーツール',
     images: [
       {
         url: '/ogp.png',
@@ -32,7 +38,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary',
     title: 'Chromalab',
-    description: '配色を楽しむ・学ぶためのカラーツール',
+    description: '配色を学ぶためのカラーツール',
     images: ['/ogp.png'],
   },
 };
