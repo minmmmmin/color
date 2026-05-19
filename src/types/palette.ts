@@ -1,16 +1,9 @@
 // src/types/palette.ts
 
-/**
- * The new, specific categories for color schemes.
- */
-export type SchemeCategory =
-  | 'hue_based'
-  | 'tone_based'
-  | 'wheel_2'
-  | 'wheel_3'
-  | 'wheel_4'
-  | 'wheel_5'
-  | 'wheel_6';
+// SchemeCategory は src/lib/scheme/types.ts の定義を正とする。
+// ここでは既存コードからのインポート互換のため re-export する。
+export type { SchemeCategory } from '@/lib/scheme/types';
+import type { SchemeCategory } from '@/lib/scheme/types';
 
 /**
  * Represents a color in the palette creation form state.
@@ -54,18 +47,20 @@ export type Tone = {
 
 /**
  * Represents a full palette record from the 'palettes' table, potentially with joined data.
+ * 配色技法は scheme_id(schemes.id への FK)で保持し、表示やカテゴリは join した schemes 経由で取る。
  */
 export type Palette = {
   id: string; // UUID
   created_at?: string;
   user_id: string; // UUID
   is_official: boolean;
-  scheme: SchemeCategory;
+  scheme_id: string; // UUID, foreign key to schemes.id
   title: string | null;
   description: string | null;
   // Joined data
   schemes?: {
     display_name: string;
+    category: SchemeCategory;
   } | null;
   palette_colors?: PaletteColorDB[];
 };

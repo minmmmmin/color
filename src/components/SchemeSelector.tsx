@@ -33,23 +33,27 @@ const SchemeSelector: React.FC<SchemeSelectorProps> = ({
   };
 
   const categoryLabels: Record<SchemeCategory, string> = {
-    hue_based: '色相でまとめた配色',
-    tone_based: 'トーンでまとめた配色',
-    wheel_2: '色相環 2色配色',
-    wheel_3: '色相環 3色配色',
-    wheel_4: '色相環 4色配色',
-    wheel_5: '色相環 5色配色',
-    wheel_6: '色相環 6色配色',
+    hue_diff: '色相差ベース',
+    tone_diff: 'トーン差ベース',
+    dominant: 'ドミナント配色',
+    tone_combo: 'トーン組み合わせ',
+    nuance: '微差配色(カマイユ系)',
+    harmony: 'ハーモニー',
+    n_colors: 'ビコロール/トリコロール',
+    wheel_division: '色相環n等分配色',
+    adjustment: '調整技法',
   };
 
   const categoryOrder: SchemeCategory[] = [
-    'hue_based',
-    'tone_based',
-    'wheel_2',
-    'wheel_3',
-    'wheel_4',
-    'wheel_5',
-    'wheel_6',
+    'hue_diff',
+    'tone_diff',
+    'dominant',
+    'tone_combo',
+    'nuance',
+    'harmony',
+    'n_colors',
+    'wheel_division',
+    'adjustment',
   ];
 
   return (

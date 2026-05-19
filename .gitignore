@@ -31,6 +31,10 @@ skills-lock.json
 
 # Supabase
 supabase/.temp/
+# マイグレーションは MCP / ダッシュボードから直接適用する運用のため、
+# git には載せない(Supabase GitHub Integration の preview branch で
+# 初期スキーマがなくエラーになるのを避ける)。
+supabase/migrations/
 
 # debug
 npm-debug.log*
@@ -47,3 +51,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.env*.local
