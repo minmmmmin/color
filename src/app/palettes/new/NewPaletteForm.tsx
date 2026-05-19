@@ -4,13 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { User } from '@supabase/supabase-js';
-import {
-  Scheme,
-  PaletteColor,
-  PaletteColorDB,
-  Tone,
-  SchemeCategory,
-} from '@/types/palette';
+import { Scheme, PaletteColor, PaletteColorDB, Tone } from '@/types/palette';
 import { createClient } from '@/lib/supabase/client';
 import { isValidHex, hslToHex } from '@/lib/color';
 
@@ -107,9 +101,7 @@ const NewPaletteForm: React.FC = () => {
       setTitle(paletteData.title || '');
       setDescription(paletteData.description || '');
 
-      const foundScheme = schemes.find(
-        (s) => s.category === paletteData.scheme,
-      );
+      const foundScheme = schemes.find((s) => s.id === paletteData.scheme_id);
       setSelectedScheme(foundScheme || null);
 
       if (paletteData.palette_colors) {
@@ -178,7 +170,7 @@ const NewPaletteForm: React.FC = () => {
     const paletteDetails = {
       user_id: user.id,
       is_official: false,
-      scheme: selectedScheme.category as SchemeCategory,
+      scheme_id: selectedScheme.id,
       title,
       description,
     };
