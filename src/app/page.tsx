@@ -159,6 +159,9 @@ const HomePage = () => {
               <Link href="/usage" className="btn btn-info btn-md">
                 使い方
               </Link>
+              <Link href="/images" className="btn btn-md">
+                配色イメージ
+              </Link>
               <Link href="/palettes/new" className="btn btn-secondary btn-md">
                 ＋ 新しく作る
               </Link>
