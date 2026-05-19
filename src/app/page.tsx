@@ -7,25 +7,28 @@ import { Palette, SchemeCategory } from '@/types/palette';
 import PaletteCard, { PaletteCardProps } from '@/components/PaletteCard';
 import { useAuth } from '@/context/AuthContext';
 
-// Static definitions for the new scheme categories
-const schemeCategories = [
-  { value: 'hue_based', label: '色相でまとめた配色' },
-  { value: 'tone_based', label: 'トーンでまとめた配色' },
-  { value: 'wheel_2', label: '色相環 2色配色' },
-  { value: 'wheel_3', label: '色相環 3色配色' },
-  { value: 'wheel_4', label: '色相環 4色配色' },
-  { value: 'wheel_5', label: '色相環 5色配色' },
-  { value: 'wheel_6', label: '色相環 6色配色' },
+const schemeCategories: { value: SchemeCategory; label: string }[] = [
+  { value: 'hue_diff', label: '色相差ベース' },
+  { value: 'tone_diff', label: 'トーン差ベース' },
+  { value: 'dominant', label: 'ドミナント配色' },
+  { value: 'tone_combo', label: 'トーン組み合わせ' },
+  { value: 'nuance', label: '微差配色(カマイユ系)' },
+  { value: 'harmony', label: 'ハーモニー' },
+  { value: 'n_colors', label: 'ビコロール/トリコロール' },
+  { value: 'wheel_division', label: '色相環n等分配色' },
+  { value: 'adjustment', label: '調整技法' },
 ];
 
 const schemeLabelMap: Record<SchemeCategory, string> = {
-  hue_based: '色相ベース',
-  tone_based: 'トーンベース',
-  wheel_2: '2色環',
-  wheel_3: '3色環',
-  wheel_4: '4色環',
-  wheel_5: '5色環',
-  wheel_6: '6色環',
+  hue_diff: '色相差',
+  tone_diff: 'トーン差',
+  dominant: 'ドミナント',
+  tone_combo: 'トーン組合せ',
+  nuance: '微差配色',
+  harmony: 'ハーモニー',
+  n_colors: 'ビ/トリコロール',
+  wheel_division: '色相環n等分',
+  adjustment: '調整技法',
 };
 
 const HomePage = () => {
@@ -58,16 +61,17 @@ const HomePage = () => {
           `
           id,
           title,
-          scheme,
+          scheme_id,
           is_official,
           created_at,
+          schemes!inner (display_name, category),
           palette_colors (palette_id, hex, role)
         `,
         )
         .order('created_at', { ascending: false });
 
       if (filter) {
-        query = query.eq('scheme', filter);
+        query = query.eq('schemes.category', filter);
       }
 
       const { data, error: fetchError } = await query;
@@ -75,7 +79,7 @@ const HomePage = () => {
       if (fetchError) {
         setError(fetchError.message);
       } else {
-        setPalettes(data as Palette[]);
+        setPalettes(data as unknown as Palette[]);
       }
       setLoading(false);
     };
@@ -88,7 +92,9 @@ const HomePage = () => {
     return palettes.map((p) => ({
       id: p.id,
       title: p.title,
-      schemeName: schemeLabelMap[p.scheme] ?? p.scheme,
+      schemeName:
+        p.schemes?.display_name ??
+        (p.schemes?.category ? schemeLabelMap[p.schemes.category] : ''),
       isOfficial: p.is_official,
       colors: p.palette_colors ?? [],
       createdAt: p.created_at,
