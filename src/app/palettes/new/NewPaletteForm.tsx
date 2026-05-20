@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { User } from '@supabase/supabase-js';
 import { Scheme, PaletteColor } from '@/types/palette';
 import { createClient } from '@/lib/supabase/client';
+import { techniquesById } from '@/lib/scheme/techniques';
 
 // Import Components
 import SchemeSelector from '@/components/SchemeSelector';
@@ -227,6 +228,23 @@ const NewPaletteForm: React.FC = () => {
 
   const activeColor = colors[activeIndex] ?? null;
 
+  // 選択中の技法の宣言定義(matcher 用)。
+  const currentTechnique = useMemo(() => {
+    if (!selectedScheme) return null;
+    return techniquesById[selectedScheme.key] ?? null;
+  }, [selectedScheme]);
+
+  // 推奨ヒントのアンカー: 最初に色を選んだスロット (tone_id が入った最初の色)。
+  // 編集中のスロット自体はアンカーから除外する(自分自身を基準にしない)。
+  const anchor = useMemo(() => {
+    const idx = colors.findIndex(
+      (c, i) => c.tone_id !== null && i !== activeIndex,
+    );
+    if (idx === -1) return null;
+    const c = colors[idx];
+    return { tone_id: c.tone_id, h: c.h };
+  }, [colors, activeIndex]);
+
   if (isLoading) return <div className="text-center p-12">読み込み中...</div>;
   if (!user)
     return (
@@ -291,9 +309,17 @@ const NewPaletteForm: React.FC = () => {
             ))}
           </div>
 
+          {currentTechnique && anchor && (
+            <p className="text-xs text-base-content/60 mb-2">
+              「{currentTechnique.nameJa}
+              」のルールに合う候補をハイライト表示しています(他も自由に選べます)
+            </p>
+          )}
           <PccsToneWheel
             selectedToneId={activeColor?.tone_id ?? null}
             selectedHue={activeColor?.h ?? null}
+            anchor={anchor}
+            technique={currentTechnique}
             onSelect={(sel) => {
               const newColors = [...colors];
               newColors[activeIndex] = {

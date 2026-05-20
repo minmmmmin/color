@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { hslToHex } from '@/lib/color';
 import {
@@ -11,6 +11,8 @@ import {
   type PccsHue,
   type ToneCode,
 } from '@/lib/scheme/pccs';
+import { isRecommendedSwatch } from '@/lib/scheme/matcher';
+import type { Technique } from '@/lib/scheme/types';
 import type { Tone } from '@/types/palette';
 
 export type PccsSelection = {
@@ -27,6 +29,13 @@ type Props = {
   selectedToneId: string | null;
   selectedHue: number | null;
   onSelect: (selection: PccsSelection) => void;
+  /**
+   * 推奨ハイライト計算のアンカー色。null の場合は推奨ヒントを表示しない
+   * (全スウォッチが通常表示)。
+   */
+  anchor?: { tone_id: string | null; h: number | null } | null;
+  /** 選択中の技法。null の場合は推奨ヒントを表示しない。 */
+  technique?: Technique | null;
 };
 
 // 楕円配置の座標 (%, container 基準)。参考画像のPCCSトーンマップを再現。
@@ -105,7 +114,17 @@ const ToneWheel: React.FC<{
   selectedToneCode: ToneCode | null;
   selectedHueNum: PccsHue | null;
   onSelect: (selection: PccsSelection) => void;
-}> = ({ toneCode, dbTone, selectedToneCode, selectedHueNum, onSelect }) => {
+  isRecommended: (hueNum: PccsHue) => boolean;
+  recommendActive: boolean;
+}> = ({
+  toneCode,
+  dbTone,
+  selectedToneCode,
+  selectedHueNum,
+  onSelect,
+  isRecommended,
+  recommendActive,
+}) => {
   const isMissing = !dbTone;
   const isThisTone = selectedToneCode === toneCode;
 
@@ -125,6 +144,7 @@ const ToneWheel: React.FC<{
         const computed = computeColor(toneCode, hueNum);
         const isSelected = isThisTone && selectedHueNum === hueNum;
         const hueInfo = PCCS_HUES[hueNum];
+        const dimmed = recommendActive && !isSelected && !isRecommended(hueNum);
 
         return (
           <button
@@ -142,11 +162,13 @@ const ToneWheel: React.FC<{
                 ...computed,
               });
             }}
-            className={`absolute rounded-sm border transition-transform ${
+            className={`absolute rounded-sm border transition-all ${
               isSelected
                 ? 'ring-2 ring-primary ring-offset-1 z-10 scale-125'
                 : 'border-base-300/50 hover:scale-110'
-            } ${isMissing ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`}
+            } ${isMissing ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'} ${
+              dimmed ? 'opacity-25 saturate-50' : ''
+            }`}
             style={{
               width: SWATCH_SIZE,
               height: SWATCH_SIZE,
@@ -166,7 +188,15 @@ const AchromaticColumn: React.FC<{
   dbTonesByKey: Map<string, Tone>;
   selectedToneCode: ToneCode | null;
   onSelect: (selection: PccsSelection) => void;
-}> = ({ dbTonesByKey, selectedToneCode, onSelect }) => {
+  isRecommended: (code: AchromaticToneCode) => boolean;
+  recommendActive: boolean;
+}> = ({
+  dbTonesByKey,
+  selectedToneCode,
+  onSelect,
+  isRecommended,
+  recommendActive,
+}) => {
   return (
     <div className="flex flex-col gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border border-base-300 bg-base-100 self-start">
       {ACHROMATIC_ORDER.map((code) => {
@@ -175,6 +205,7 @@ const AchromaticColumn: React.FC<{
         const computed = computeColor(code, null);
         const isSelected = selectedToneCode === code;
         const isMissing = !dbTone;
+        const dimmed = recommendActive && !isSelected && !isRecommended(code);
 
         return (
           <button
@@ -192,9 +223,9 @@ const AchromaticColumn: React.FC<{
                 ...computed,
               });
             }}
-            className={`flex flex-col items-center gap-1 ${
+            className={`flex flex-col items-center gap-1 transition-all ${
               isMissing ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'
-            }`}
+            } ${dimmed ? 'opacity-30' : ''}`}
           >
             <div
               className={`rounded border-2 transition-all ${
@@ -220,6 +251,8 @@ const PccsToneWheel: React.FC<Props> = ({
   selectedToneId,
   selectedHue,
   onSelect,
+  anchor = null,
+  technique = null,
 }) => {
   const [dbTones, setDbTones] = useState<Tone[]>([]);
   const [loading, setLoading] = useState(true);
@@ -279,6 +312,48 @@ const PccsToneWheel: React.FC<Props> = ({
     return findNearestHueNum(selectedHue);
   }, [selectedToneCode, selectedHue]);
 
+  // アンカー色を (toneCode, hueNum) 形式に正規化。
+  const anchorCandidate = useMemo<{
+    toneCode: ToneCode;
+    hueNum: PccsHue | null;
+  } | null>(() => {
+    if (!anchor || !anchor.tone_id) return null;
+    const t = dbTones.find((x) => x.id === anchor.tone_id);
+    if (!t) return null;
+    const code = t.key as ToneCode;
+    if (!(code in PCCS_TONES)) return null;
+    const hueNum = PCCS_TONES[code].isChromatic
+      ? findNearestHueNum(anchor.h)
+      : null;
+    return { toneCode: code, hueNum };
+  }, [anchor, dbTones]);
+
+  const recommendActive = anchorCandidate !== null && technique !== null;
+
+  const isRecommendedChromatic = useCallback(
+    (toneCode: ChromaticToneCode, hueNum: PccsHue): boolean => {
+      if (!anchorCandidate || !technique) return true;
+      return isRecommendedSwatch(
+        { toneCode, hueNum },
+        anchorCandidate,
+        technique,
+      );
+    },
+    [anchorCandidate, technique],
+  );
+
+  const isRecommendedAchromatic = useCallback(
+    (code: AchromaticToneCode): boolean => {
+      if (!anchorCandidate || !technique) return true;
+      return isRecommendedSwatch(
+        { toneCode: code, hueNum: null },
+        anchorCandidate,
+        technique,
+      );
+    },
+    [anchorCandidate, technique],
+  );
+
   if (loading) {
     return <div className="text-center p-8">トーンを読み込み中...</div>;
   }
@@ -300,6 +375,8 @@ const PccsToneWheel: React.FC<Props> = ({
           dbTonesByKey={dbTonesByKey}
           selectedToneCode={selectedToneCode}
           onSelect={onSelect}
+          isRecommended={isRecommendedAchromatic}
+          recommendActive={recommendActive}
         />
 
         <div className="relative flex-1" style={{ aspectRatio: '5 / 4' }}>
@@ -319,6 +396,8 @@ const PccsToneWheel: React.FC<Props> = ({
                 selectedToneCode={selectedToneCode}
                 selectedHueNum={selectedHueNum}
                 onSelect={onSelect}
+                isRecommended={(hueNum) => isRecommendedChromatic(key, hueNum)}
+                recommendActive={recommendActive}
               />
             </div>
           ))}
