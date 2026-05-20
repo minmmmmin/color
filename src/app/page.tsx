@@ -213,13 +213,6 @@ const HomePage = () => {
                     <Link href="/quiz/history">クイズ履歴</Link>
                   </li>
                 )}
-                {user && (
-                  <li>
-                    <Link href="/palettes/new" className="text-secondary">
-                      ＋ 新しく作る
-                    </Link>
-                  </li>
-                )}
                 <div className="divider my-1" />
                 {isLoadingUser ? (
                   <li>
@@ -294,6 +287,30 @@ const HomePage = () => {
           </div>
         )}
       </div>
+
+      {/* モバイル専用 FAB: ＋新しく作る (lg 以上ではヘッダーに統合されているため非表示) */}
+      {user && (
+        <Link
+          href="/palettes/new"
+          aria-label="新しい配色を作る"
+          className="lg:hidden btn btn-secondary btn-circle btn-lg shadow-xl fixed bottom-6 right-6 z-20"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-7 w-7"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2.5}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+        </Link>
+      )}
     </main>
   );
 };
