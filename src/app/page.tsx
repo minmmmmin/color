@@ -130,23 +130,23 @@ const HomePage = () => {
       </dialog>
       <div className="max-w-7xl mx-auto">
         <header className="mb-8 md:mb-12">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div>
-              <h1 className="text-4xl sm:text-5xl font-bold">Chromalab</h1>
-              <p className="text-lg text-base-content/70 mt-1">
+          <div className="flex flex-row justify-between items-center gap-4">
+            <div className="min-w-0">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold truncate">
+                Chromalab
+              </h1>
+              <p className="text-sm sm:text-base md:text-lg text-base-content/70 mt-1">
                 自分だけのカラーパレットを作ろう
               </p>
             </div>
 
-            {/* Auth Buttons / User Info */}
-            <div className="flex items-center gap-2">
+            {/* Desktop nav (lg+) */}
+            <nav className="hidden lg:flex items-center gap-2">
               {isLoadingUser ? (
-                <span className="loading loading-spinner loading-sm"></span>
+                <span className="loading loading-spinner loading-sm" />
               ) : user ? (
                 <>
-                  <span className="text-sm font-medium hidden sm:block">
-                    {user.email}
-                  </span>
+                  <span className="text-sm font-medium">{user.email}</span>
                   <button onClick={handleSignOut} className="btn btn-sm">
                     ログアウト
                   </button>
@@ -156,18 +156,92 @@ const HomePage = () => {
                   ログイン
                 </Link>
               )}
-              <Link href="/usage" className="btn btn-info btn-md">
+              <Link href="/usage" className="btn btn-info">
                 使い方
               </Link>
-              <Link href="/images" className="btn btn-md">
+              <Link href="/images" className="btn">
                 配色イメージ
               </Link>
-              <Link href="/quiz/technique" className="btn btn-accent btn-md">
+              <Link href="/quiz/technique" className="btn btn-accent">
                 クイズ
               </Link>
-              <Link href="/palettes/new" className="btn btn-secondary btn-md">
+              <Link href="/palettes/new" className="btn btn-secondary">
                 ＋ 新しく作る
               </Link>
+            </nav>
+
+            {/* Mobile hamburger (<lg) */}
+            <div className="lg:hidden dropdown dropdown-end">
+              <div
+                tabIndex={0}
+                role="button"
+                aria-label="メニューを開く"
+                className="btn btn-ghost btn-square"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              </div>
+              <ul
+                tabIndex={0}
+                className="menu menu-md dropdown-content bg-base-100 rounded-box z-30 mt-3 w-60 p-2 shadow-lg border border-base-300"
+              >
+                <li>
+                  <Link href="/usage">使い方</Link>
+                </li>
+                <li>
+                  <Link href="/images">配色イメージ</Link>
+                </li>
+                <li>
+                  <Link href="/quiz/technique" className="text-accent">
+                    クイズに挑戦
+                  </Link>
+                </li>
+                {user && (
+                  <li>
+                    <Link href="/quiz/history">クイズ履歴</Link>
+                  </li>
+                )}
+                {user && (
+                  <li>
+                    <Link href="/palettes/new" className="text-secondary">
+                      ＋ 新しく作る
+                    </Link>
+                  </li>
+                )}
+                <div className="divider my-1" />
+                {isLoadingUser ? (
+                  <li>
+                    <span>
+                      <span className="loading loading-spinner loading-sm" />
+                    </span>
+                  </li>
+                ) : user ? (
+                  <>
+                    <li className="menu-title">
+                      <span className="text-xs break-all">{user.email}</span>
+                    </li>
+                    <li>
+                      <button onClick={handleSignOut}>ログアウト</button>
+                    </li>
+                  </>
+                ) : (
+                  <li>
+                    <Link href="/login">ログイン</Link>
+                  </li>
+                )}
+              </ul>
             </div>
           </div>
 
