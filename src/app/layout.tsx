@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Geist, Geist_Mono, Yusei_Magic } from 'next/font/google';
 import { AuthProvider } from '@/context/AuthContext';
 import './globals.css';
 
@@ -11,6 +11,14 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
+});
+
+// Chromalab タイトル専用フォント。CSS 変数 --font-yusei-magic として公開する。
+const yuseiMagic = Yusei_Magic({
+  variable: '--font-yusei-magic',
+  weight: '400',
+  subsets: ['latin'],
+  display: 'swap',
 });
 
 const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.VERCEL_URL;
@@ -53,7 +61,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${yuseiMagic.variable} antialiased`}
       >
         <AuthProvider>{children}</AuthProvider>
       </body>
