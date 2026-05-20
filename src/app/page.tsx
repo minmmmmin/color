@@ -148,7 +148,7 @@ const HomePage = () => {
         <header className="mb-8 md:mb-12">
           <div className="flex flex-row justify-between items-center gap-4">
             <div className="min-w-0">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold truncate">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold truncate font-yusei">
                 Chromalab
               </h1>
               <p className="text-sm sm:text-base md:text-lg text-base-content/70 mt-1">

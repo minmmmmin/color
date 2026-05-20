@@ -76,7 +76,7 @@ export default function UsagePage() {
         {/* Hero */}
         <div className="rounded-3xl border border-base-300 bg-base-100 p-6 sm:p-8 md:p-10 shadow-sm mb-10">
           <h1 className="text-4xl sm:text-5xl font-bold mb-3">
-            Chromalab の使い方
+            <span className="font-yusei">Chromalab</span> の使い方
           </h1>
         </div>
 
