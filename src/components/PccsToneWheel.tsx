@@ -69,10 +69,7 @@ const findNearestHueNum = (h: number | null): PccsHue | null => {
   let bestDist = Infinity;
   for (const hueNum of TWELVE_HUES) {
     const hueDeg = PCCS_HUES[hueNum].representativeHue;
-    const d = Math.min(
-      Math.abs(hueDeg - h),
-      360 - Math.abs(hueDeg - h),
-    );
+    const d = Math.min(Math.abs(hueDeg - h), 360 - Math.abs(hueDeg - h));
     if (d < bestDist) {
       bestDist = d;
       best = hueNum;
@@ -81,9 +78,11 @@ const findNearestHueNum = (h: number | null): PccsHue | null => {
   return best;
 };
 
-const WHEEL_SIZE = 124; // px
-const WHEEL_RADIUS = 44; // px (中心からスウォッチ中心まで)
-const SWATCH_SIZE = 22; // px
+// CSS変数で wheel サイズを定義し、clamp() でビューポート幅に応じてスケールする。
+// 各値は root container で `--wheel-size` から派生する。
+const WHEEL_SIZE = 'var(--wheel-size)';
+const WHEEL_RADIUS = 'calc(var(--wheel-size) * 0.36)';
+const SWATCH_SIZE = 'calc(var(--wheel-size) * 0.20)';
 
 type Computed = {
   hex: string;
@@ -92,10 +91,7 @@ type Computed = {
   l: number;
 };
 
-const computeColor = (
-  toneCode: ToneCode,
-  hueNum: PccsHue | null,
-): Computed => {
+const computeColor = (toneCode: ToneCode, hueNum: PccsHue | null): Computed => {
   const t = PCCS_TONES[toneCode];
   const h = hueNum === null ? 0 : PCCS_HUES[hueNum].representativeHue;
   const s = t.representativeS;
@@ -120,7 +116,7 @@ const ToneWheel: React.FC<{
       title={isMissing ? `${toneCode} (DB未登録)` : undefined}
     >
       <div className="absolute inset-0 rounded-full bg-base-100 border border-base-300 flex items-center justify-center pointer-events-none">
-        <span className="text-sm font-bold font-mono select-none">
+        <span className="text-xs sm:text-sm font-bold font-mono select-none">
           {toneCode}
         </span>
       </div>
@@ -157,7 +153,7 @@ const ToneWheel: React.FC<{
               backgroundColor: computed.hex,
               left: '50%',
               top: '50%',
-              transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-${WHEEL_RADIUS}px) rotate(-${angle}deg)`,
+              transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(calc(-1 * ${WHEEL_RADIUS})) rotate(-${angle}deg)`,
             }}
           />
         );
@@ -172,7 +168,7 @@ const AchromaticColumn: React.FC<{
   onSelect: (selection: PccsSelection) => void;
 }> = ({ dbTonesByKey, selectedToneCode, onSelect }) => {
   return (
-    <div className="flex flex-col gap-3 p-3 rounded-lg border border-base-300 bg-base-100">
+    <div className="flex flex-col gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border border-base-300 bg-base-100 self-start">
       {ACHROMATIC_ORDER.map((code) => {
         const dbTone = dbTonesByKey.get(code);
         const t = PCCS_TONES[code];
@@ -201,14 +197,18 @@ const AchromaticColumn: React.FC<{
             }`}
           >
             <div
-              className={`w-12 h-12 rounded border-2 transition-all ${
+              className={`rounded border-2 transition-all ${
                 isSelected
                   ? 'border-primary ring-2 ring-primary ring-offset-1 scale-110'
                   : 'border-base-300 hover:scale-105'
               }`}
-              style={{ backgroundColor: computed.hex }}
+              style={{
+                width: 'calc(var(--wheel-size) * 0.42)',
+                height: 'calc(var(--wheel-size) * 0.42)',
+                backgroundColor: computed.hex,
+              }}
             />
-            <span className="text-[10px] font-mono">{code}</span>
+            <span className="text-[9px] sm:text-[10px] font-mono">{code}</span>
           </button>
         );
       })}
@@ -287,18 +287,22 @@ const PccsToneWheel: React.FC<Props> = ({
   }
 
   return (
-    <div className="w-full overflow-x-auto">
-      <div className="flex gap-4 min-w-[720px]">
+    <div
+      className="w-full max-w-3xl mx-auto"
+      style={
+        {
+          '--wheel-size': 'clamp(64px, 13vw, 120px)',
+        } as React.CSSProperties
+      }
+    >
+      <div className="flex gap-2 sm:gap-4">
         <AchromaticColumn
           dbTonesByKey={dbTonesByKey}
           selectedToneCode={selectedToneCode}
           onSelect={onSelect}
         />
 
-        <div
-          className="relative flex-1"
-          style={{ aspectRatio: '11 / 10', minHeight: 460 }}
-        >
+        <div className="relative flex-1" style={{ aspectRatio: '11 / 10' }}>
           {CHROMATIC_LAYOUT.map(({ key, x, y }) => (
             <div
               key={key}

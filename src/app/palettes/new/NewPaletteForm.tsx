@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { User } from '@supabase/supabase-js';
@@ -10,9 +10,7 @@ import { createClient } from '@/lib/supabase/client';
 // Import Components
 import SchemeSelector from '@/components/SchemeSelector';
 import PalettePreviewBar from '@/components/PalettePreviewBar';
-import PccsToneWheel, {
-  type PccsSelection,
-} from '@/components/PccsToneWheel';
+import PccsToneWheel from '@/components/PccsToneWheel';
 
 const MIN_COLORS = 2;
 const MAX_COLORS = 6;
@@ -47,10 +45,8 @@ const NewPaletteForm: React.FC = () => {
     Array.from({ length: MIN_COLORS }, createDefaultColor),
   );
 
-  // Color Editing State
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [pendingSelection, setPendingSelection] =
-    useState<PccsSelection | null>(null);
+  // アクティブスロット (常に1つが選択中)。スウォッチクリックでここに即適用する。
+  const [activeIndex, setActiveIndex] = useState<number>(0);
 
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -222,43 +218,14 @@ const NewPaletteForm: React.FC = () => {
     }
   };
 
-  const handleSelectSlot = (index: number) => {
-    setActiveIndex(index);
-    setPendingSelection(null);
-  };
-
-  const activeColor = activeIndex !== null ? colors[activeIndex] : null;
-
-  const previewColor = useMemo(() => {
-    if (pendingSelection) {
-      return {
-        hex: pendingSelection.hex,
-        label: `${pendingSelection.toneCode}${
-          pendingSelection.hueNum ? `-${pendingSelection.hueNum}` : ''
-        }`,
-      };
+  // colors の長さが activeIndex を下回らないようにクランプ
+  useEffect(() => {
+    if (activeIndex >= colors.length) {
+      setActiveIndex(Math.max(0, colors.length - 1));
     }
-    if (activeColor) {
-      return { hex: activeColor.hex, label: activeColor.hex };
-    }
-    return null;
-  }, [pendingSelection, activeColor]);
+  }, [activeIndex, colors.length]);
 
-  const handleApply = () => {
-    if (activeIndex === null || !pendingSelection) return;
-    const newColors = [...colors];
-    newColors[activeIndex] = {
-      ...newColors[activeIndex],
-      hex: pendingSelection.hex,
-      h: pendingSelection.h,
-      s: pendingSelection.s,
-      l: pendingSelection.l,
-      tone_id: pendingSelection.tone.id,
-    };
-    setColors(newColors);
-    setActiveIndex(null);
-    setPendingSelection(null);
-  };
+  const activeColor = colors[activeIndex] ?? null;
 
   if (isLoading) return <div className="text-center p-12">読み込み中...</div>;
   if (!user)
@@ -295,19 +262,20 @@ const NewPaletteForm: React.FC = () => {
         <section>
           <h2 className="text-xl font-semibold mb-3">2) 色</h2>
           <p className="text-sm text-base-content/70 mb-4">
-            下の色スロットを選び、PCCSトーン図から(トーン×色相)を1つ選択してください。
+            スロットを選び、PCCSトーン図のスウォッチをクリックすると即時反映されます。
           </p>
           <div className="flex flex-wrap gap-3 mb-6">
             {colors.map((color, index) => (
               <button
                 key={index}
                 type="button"
-                onClick={() => handleSelectSlot(index)}
+                onClick={() => setActiveIndex(index)}
                 className={`cursor-pointer rounded-lg p-2 border-2 transition-all ${
                   activeIndex === index
                     ? 'border-primary ring-2 ring-primary ring-offset-2 scale-105'
                     : 'border-base-300 hover:border-base-content/30'
                 }`}
+                aria-pressed={activeIndex === index}
               >
                 <div
                   className="w-16 h-16 rounded"
@@ -323,60 +291,22 @@ const NewPaletteForm: React.FC = () => {
             ))}
           </div>
 
-          {activeIndex !== null && (
-            <div className="p-4 border-2 border-primary rounded-lg space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="font-semibold">
-                  スロット {activeIndex + 1} の色を編集中
-                </h3>
-                {previewColor && (
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-12 h-12 rounded border border-base-300"
-                      style={{ backgroundColor: previewColor.hex }}
-                    />
-                    <div className="text-sm">
-                      <div className="font-mono">{previewColor.hex}</div>
-                      {previewColor.label !== previewColor.hex && (
-                        <div className="text-xs text-base-content/70">
-                          {previewColor.label}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <PccsToneWheel
-                selectedToneId={
-                  pendingSelection?.tone.id ?? activeColor?.tone_id ?? null
-                }
-                selectedHue={pendingSelection?.h ?? activeColor?.h ?? null}
-                onSelect={setPendingSelection}
-              />
-
-              <div className="flex justify-end gap-2 sticky bottom-2 bg-base-100/80 backdrop-blur p-2 rounded">
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  onClick={() => {
-                    setActiveIndex(null);
-                    setPendingSelection(null);
-                  }}
-                >
-                  キャンセル
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleApply}
-                  disabled={!pendingSelection}
-                >
-                  この色にする
-                </button>
-              </div>
-            </div>
-          )}
+          <PccsToneWheel
+            selectedToneId={activeColor?.tone_id ?? null}
+            selectedHue={activeColor?.h ?? null}
+            onSelect={(sel) => {
+              const newColors = [...colors];
+              newColors[activeIndex] = {
+                ...newColors[activeIndex],
+                hex: sel.hex,
+                h: sel.h,
+                s: sel.s,
+                l: sel.l,
+                tone_id: sel.tone.id,
+              };
+              setColors(newColors);
+            }}
+          />
         </section>
 
         <section>
