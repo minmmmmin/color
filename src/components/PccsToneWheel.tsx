@@ -31,18 +31,18 @@ type Props = {
 
 // 楕円配置の座標 (%, container 基準)。参考画像のPCCSトーンマップを再現。
 const CHROMATIC_LAYOUT: { key: ChromaticToneCode; x: number; y: number }[] = [
-  { key: 'p', x: 28, y: 12 },
-  { key: 'lt', x: 48, y: 12 },
-  { key: 'b', x: 68, y: 24 },
-  { key: 'ltg', x: 28, y: 32 },
-  { key: 'sf', x: 48, y: 32 },
-  { key: 's', x: 68, y: 52 },
-  { key: 'v', x: 90, y: 52 },
-  { key: 'g', x: 28, y: 52 },
-  { key: 'd', x: 48, y: 52 },
-  { key: 'dp', x: 68, y: 72 },
-  { key: 'dkg', x: 28, y: 84 },
-  { key: 'dk', x: 48, y: 84 },
+  { key: 'p', x: 10, y: 10 },
+  { key: 'lt', x: 30, y: 10 },
+  { key: 'b', x: 50, y: 22 },
+  { key: 'ltg', x: 10, y: 34 },
+  { key: 'sf', x: 30, y: 34 },
+  { key: 'g', x: 10, y: 58 },
+  { key: 'd', x: 30, y: 58 },
+  { key: 's', x: 50, y: 44 },
+  { key: 'v', x: 70, y: 44 },
+  { key: 'dp', x: 50, y: 70 },
+  { key: 'dkg', x: 10, y: 82 },
+  { key: 'dk', x: 30, y: 82 },
 ];
 
 const ACHROMATIC_ORDER: AchromaticToneCode[] = [
@@ -291,7 +291,7 @@ const PccsToneWheel: React.FC<Props> = ({
       className="w-full max-w-3xl mx-auto"
       style={
         {
-          '--wheel-size': 'clamp(64px, 13vw, 120px)',
+          '--wheel-size': 'clamp(56px, 11vw, 96px)',
         } as React.CSSProperties
       }
     >
@@ -302,7 +302,7 @@ const PccsToneWheel: React.FC<Props> = ({
           onSelect={onSelect}
         />
 
-        <div className="relative flex-1" style={{ aspectRatio: '11 / 10' }}>
+        <div className="relative flex-1" style={{ aspectRatio: '5 / 4' }}>
           {CHROMATIC_LAYOUT.map(({ key, x, y }) => (
             <div
               key={key}
