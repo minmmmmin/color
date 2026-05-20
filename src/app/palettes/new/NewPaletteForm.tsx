@@ -4,18 +4,15 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { User } from '@supabase/supabase-js';
-import { Scheme, PaletteColor, PaletteColorDB, Tone } from '@/types/palette';
+import { Scheme, PaletteColor } from '@/types/palette';
 import { createClient } from '@/lib/supabase/client';
-import { isValidHex, hslToHex } from '@/lib/color';
 
 // Import Components
 import SchemeSelector from '@/components/SchemeSelector';
 import PalettePreviewBar from '@/components/PalettePreviewBar';
-import ToneSelector from '@/components/ToneSelector';
-import HueSlider from '@/components/HueSlider';
-
-const clamp = (num: number, min: number, max: number) =>
-  Math.min(Math.max(num, min), max);
+import PccsToneWheel, {
+  type PccsSelection,
+} from '@/components/PccsToneWheel';
 
 const MIN_COLORS = 2;
 const MAX_COLORS = 6;
@@ -52,8 +49,8 @@ const NewPaletteForm: React.FC = () => {
 
   // Color Editing State
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [editingTone, setEditingTone] = useState<Tone | null>(null);
-  const [editingHue, setEditingHue] = useState<number>(0);
+  const [pendingSelection, setPendingSelection] =
+    useState<PccsSelection | null>(null);
 
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -105,12 +102,10 @@ const NewPaletteForm: React.FC = () => {
       setSelectedScheme(foundScheme || null);
 
       if (paletteData.palette_colors) {
-        // First, sort the original array safely
         const sortedDbColors = [...paletteData.palette_colors].sort((a, b) =>
           (a.role || '').localeCompare(b.role || ''),
         );
 
-        // Then, map the sorted array to the state shape
         const fetchedColors = sortedDbColors.map((c) => ({
           hex: c.hex,
           h: c.h,
@@ -227,35 +222,42 @@ const NewPaletteForm: React.FC = () => {
     }
   };
 
-  const editingColor = useMemo(() => {
-    if (!editingTone) return { hex: '#808080', h: 0, s: 0, l: 50 };
-    const h = (Math.round(editingHue / 15) * 15) % 360;
-    const s = Math.round((editingTone.s_min + editingTone.s_max) / 2);
-    const l = Math.round((editingTone.l_min + editingTone.l_max) / 2);
-    const hex = hslToHex(h, s, l);
-    return { hex, h, s, l };
-  }, [editingTone, editingHue]);
-
   const handleSelectSlot = (index: number) => {
     setActiveIndex(index);
-    const currentColor = colors[index];
-    setEditingHue(currentColor.h ?? 0);
-    setEditingTone(null);
+    setPendingSelection(null);
   };
 
-  const handleSetColor = () => {
-    if (activeIndex === null || !editingTone) return;
+  const activeColor = activeIndex !== null ? colors[activeIndex] : null;
+
+  const previewColor = useMemo(() => {
+    if (pendingSelection) {
+      return {
+        hex: pendingSelection.hex,
+        label: `${pendingSelection.toneCode}${
+          pendingSelection.hueNum ? `-${pendingSelection.hueNum}` : ''
+        }`,
+      };
+    }
+    if (activeColor) {
+      return { hex: activeColor.hex, label: activeColor.hex };
+    }
+    return null;
+  }, [pendingSelection, activeColor]);
+
+  const handleApply = () => {
+    if (activeIndex === null || !pendingSelection) return;
     const newColors = [...colors];
     newColors[activeIndex] = {
       ...newColors[activeIndex],
-      hex: editingColor.hex,
-      h: editingColor.h,
-      s: editingColor.s,
-      l: editingColor.l,
-      tone_id: editingTone.id,
+      hex: pendingSelection.hex,
+      h: pendingSelection.h,
+      s: pendingSelection.s,
+      l: pendingSelection.l,
+      tone_id: pendingSelection.tone.id,
     };
     setColors(newColors);
     setActiveIndex(null);
+    setPendingSelection(null);
   };
 
   if (isLoading) return <div className="text-center p-12">読み込み中...</div>;
@@ -291,57 +293,84 @@ const NewPaletteForm: React.FC = () => {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold mb-3">2) 色 (トーンで選ぶ)</h2>
+          <h2 className="text-xl font-semibold mb-3">2) 色</h2>
           <p className="text-sm text-base-content/70 mb-4">
-            下の色スロットを選択して、トーンと色相で色を作成してください。
+            下の色スロットを選び、PCCSトーン図から(トーン×色相)を1つ選択してください。
           </p>
-          <div className="flex flex-wrap gap-4 mb-8">
+          <div className="flex flex-wrap gap-3 mb-6">
             {colors.map((color, index) => (
-              <div
+              <button
                 key={index}
+                type="button"
                 onClick={() => handleSelectSlot(index)}
-                className={`cursor-pointer rounded-lg p-2 border-2 ${activeIndex === index ? 'border-primary' : 'border-base-300'}`}
+                className={`cursor-pointer rounded-lg p-2 border-2 transition-all ${
+                  activeIndex === index
+                    ? 'border-primary ring-2 ring-primary ring-offset-2 scale-105'
+                    : 'border-base-300 hover:border-base-content/30'
+                }`}
               >
                 <div
                   className="w-16 h-16 rounded"
                   style={{ backgroundColor: color.hex }}
-                ></div>
-                <div className="text-xs text-center mt-1 font-mono">
+                />
+                <div className="text-[10px] text-center mt-1 text-base-content/70">
+                  スロット {index + 1}
+                </div>
+                <div className="text-[10px] text-center font-mono">
                   {color.hex}
                 </div>
-              </div>
+              </button>
             ))}
           </div>
+
           {activeIndex !== null && (
-            <div className="p-4 border-2 border-primary rounded-lg space-y-6">
-              <h3 className="font-semibold">
-                スロット {activeIndex + 1} の色を編集中...
-              </h3>
-              <div className="grid md:grid-cols-2 gap-8 items-center">
-                <div>
-                  <div
-                    className="flex justify-center items-center w-full h-40 rounded-lg mb-4"
-                    style={{ backgroundColor: editingColor.hex }}
-                  >
-                    <span className="p-2 bg-black/30 text-white rounded font-mono">
-                      {editingColor.hex}
-                    </span>
+            <div className="p-4 border-2 border-primary rounded-lg space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="font-semibold">
+                  スロット {activeIndex + 1} の色を編集中
+                </h3>
+                {previewColor && (
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-12 h-12 rounded border border-base-300"
+                      style={{ backgroundColor: previewColor.hex }}
+                    />
+                    <div className="text-sm">
+                      <div className="font-mono">{previewColor.hex}</div>
+                      {previewColor.label !== previewColor.hex && (
+                        <div className="text-xs text-base-content/70">
+                          {previewColor.label}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <HueSlider hue={editingHue} onHueChange={setEditingHue} />
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">トーンを選択</h4>
-                  <ToneSelector
-                    selectedToneId={editingTone?.id ?? null}
-                    onToneSelect={setEditingTone}
-                  />
-                </div>
+                )}
               </div>
-              <div className="text-center">
+
+              <PccsToneWheel
+                selectedToneId={
+                  pendingSelection?.tone.id ?? activeColor?.tone_id ?? null
+                }
+                selectedHue={pendingSelection?.h ?? activeColor?.h ?? null}
+                onSelect={setPendingSelection}
+              />
+
+              <div className="flex justify-end gap-2 sticky bottom-2 bg-base-100/80 backdrop-blur p-2 rounded">
                 <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => {
+                    setActiveIndex(null);
+                    setPendingSelection(null);
+                  }}
+                >
+                  キャンセル
+                </button>
+                <button
+                  type="button"
                   className="btn btn-primary"
-                  onClick={handleSetColor}
-                  disabled={!editingTone}
+                  onClick={handleApply}
+                  disabled={!pendingSelection}
                 >
                   この色にする
                 </button>
