@@ -48,6 +48,10 @@ const HomePage = () => {
 
   // Filter state using the new enum values
   const [filter, setFilter] = useState<string>(''); // Empty string for "All"
+  // パレットの所有者フィルタ: '' = 全て, 'official' = 公式, 'personal' = 自分のみ
+  const [ownerFilter, setOwnerFilter] = useState<'' | 'official' | 'personal'>(
+    '',
+  );
 
   // Fetch palettes based on the filter
   useEffect(() => {
@@ -63,6 +67,7 @@ const HomePage = () => {
           title,
           scheme_id,
           is_official,
+          user_id,
           created_at,
           schemes!inner (display_name, category),
           palette_colors (palette_id, hex, role)
@@ -72,6 +77,17 @@ const HomePage = () => {
 
       if (filter) {
         query = query.eq('schemes.category', filter);
+      }
+
+      if (ownerFilter === 'official') {
+        query = query.eq('is_official', true);
+      } else if (ownerFilter === 'personal') {
+        if (!user) {
+          setPalettes([]);
+          setLoading(false);
+          return;
+        }
+        query = query.eq('user_id', user.id).eq('is_official', false);
       }
 
       const { data, error: fetchError } = await query;
@@ -85,7 +101,7 @@ const HomePage = () => {
     };
 
     fetchPalettes();
-  }, [filter, supabase]);
+  }, [filter, ownerFilter, supabase, user]);
 
   // Map palettes to card props using the new label map
   const paletteCards: PaletteCardProps[] = useMemo(() => {
@@ -239,7 +255,7 @@ const HomePage = () => {
           </div>
 
           {/* New Filters */}
-          <div className="mt-8 flex flex-col sm:flex-row gap-4">
+          <div className="mt-8 flex flex-col sm:flex-row gap-4 sm:items-end">
             <div className="form-control w-full sm:w-64">
               <label className="label">
                 <span className="label-text">カテゴリで絞り込み</span>
@@ -256,6 +272,37 @@ const HomePage = () => {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="form-control w-full sm:w-64">
+              <label className="label">
+                <span className="label-text">作成者で絞り込み</span>
+              </label>
+              <div className="join">
+                <button
+                  type="button"
+                  className={`btn join-item btn-sm sm:btn-md ${ownerFilter === '' ? 'btn-active btn-primary' : ''}`}
+                  onClick={() => setOwnerFilter('')}
+                >
+                  全て
+                </button>
+                <button
+                  type="button"
+                  className={`btn join-item btn-sm sm:btn-md ${ownerFilter === 'official' ? 'btn-active btn-primary' : ''}`}
+                  onClick={() => setOwnerFilter('official')}
+                >
+                  公式
+                </button>
+                <button
+                  type="button"
+                  className={`btn join-item btn-sm sm:btn-md ${ownerFilter === 'personal' ? 'btn-active btn-primary' : ''}`}
+                  onClick={() => setOwnerFilter('personal')}
+                  disabled={!user}
+                  title={!user ? 'ログインが必要です' : undefined}
+                >
+                  自分のみ
+                </button>
+              </div>
             </div>
           </div>
         </header>
