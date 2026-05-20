@@ -20,6 +20,7 @@ const QuizHistoryPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [authed, setAuthed] = useState<boolean>(true);
   const [attempts, setAttempts] = useState<AttemptRow[]>([]);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -64,6 +65,30 @@ const QuizHistoryPage = () => {
       accuracy: total === 0 ? 0 : Math.round((correct / total) * 100),
     };
   }, [attempts]);
+
+  const handleClearAll = async () => {
+    setDeleting(true);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      setDeleting(false);
+      return;
+    }
+    const { error: delErr } = await supabase
+      .from('quiz_attempts')
+      .delete()
+      .eq('user_id', user.id);
+    if (delErr) {
+      setError(delErr.message);
+    } else {
+      setAttempts([]);
+    }
+    setDeleting(false);
+    (
+      document.getElementById('clear-history-modal') as HTMLDialogElement | null
+    )?.close();
+  };
 
   const byTechnique = useMemo(() => {
     const map = new Map<
@@ -116,15 +141,55 @@ const QuizHistoryPage = () => {
               これまでの解答の通算成績と、最近の解答ログ。
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Link href="/quiz/technique" className="btn btn-primary btn-sm">
               クイズに挑戦
             </Link>
+            <button
+              type="button"
+              className="btn btn-error btn-outline btn-sm"
+              disabled={attempts.length === 0 || deleting}
+              onClick={() =>
+                (
+                  document.getElementById(
+                    'clear-history-modal',
+                  ) as HTMLDialogElement | null
+                )?.showModal()
+              }
+            >
+              履歴を全消去
+            </button>
             <Link href="/" className="btn btn-ghost btn-sm">
               ← ホーム
             </Link>
           </div>
         </header>
+
+        <dialog id="clear-history-modal" className="modal">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg">履歴を全消去しますか?</h3>
+            <p className="py-3 text-sm">
+              これまでの解答ログ ({attempts.length} 件)
+              をすべて削除します。元に戻せません。
+            </p>
+            <div className="modal-action">
+              <form method="dialog">
+                <button className="btn btn-ghost">キャンセル</button>
+              </form>
+              <button
+                type="button"
+                className="btn btn-error"
+                disabled={deleting}
+                onClick={handleClearAll}
+              >
+                {deleting ? '削除中...' : '消去する'}
+              </button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button>close</button>
+          </form>
+        </dialog>
 
         <section className="grid grid-cols-3 gap-3 mb-8">
           <div className="card bg-base-100 shadow">

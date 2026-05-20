@@ -13,9 +13,14 @@ const TechniqueQuizPage = () => {
               公式パレットから配色技法を4択で当てましょう。
             </p>
           </div>
-          <Link href="/" className="btn btn-ghost">
-            ← ホーム
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/quiz/history" className="btn btn-ghost btn-sm">
+              履歴
+            </Link>
+            <Link href="/" className="btn btn-ghost btn-sm">
+              ← ホーム
+            </Link>
+          </div>
         </header>
 
         <TechniqueQuiz />
