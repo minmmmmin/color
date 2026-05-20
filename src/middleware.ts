@@ -2,6 +2,18 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
+  // Supabase 認証コードが /auth/callback 以外に着地した場合 (Site URL が
+  // /auth/callback を含まない設定だと root に来てしまう) は、明示的に
+  // /auth/callback に転送して exchangeCodeForSession を走らせる。
+  const url = request.nextUrl;
+  if (url.searchParams.has('code') && url.pathname !== '/auth/callback') {
+    const redirectUrl = new URL('/auth/callback', request.url);
+    url.searchParams.forEach((value, key) => {
+      redirectUrl.searchParams.set(key, value);
+    });
+    return NextResponse.redirect(redirectUrl);
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
