@@ -76,16 +76,16 @@ const TechniqueQuiz: React.FC = () => {
       } = await supabase.auth.getUser();
       setUserId(user?.id ?? null);
 
-      const [{ data: palettesData, error: pErr }, { data: schemesData, error: sErr }] =
-        await Promise.all([
-          supabase
-            .from('palettes')
-            .select(
-              'id, title, scheme_id, palette_colors(hex, role, ratio)',
-            )
-            .eq('is_official', true),
-          supabase.from('schemes').select('*'),
-        ]);
+      const [
+        { data: palettesData, error: pErr },
+        { data: schemesData, error: sErr },
+      ] = await Promise.all([
+        supabase
+          .from('palettes')
+          .select('id, title, scheme_id, palette_colors(hex, role, ratio)')
+          .eq('is_official', true),
+        supabase.from('schemes').select('*'),
+      ]);
 
       if (pErr || sErr) {
         setError(pErr?.message || sErr?.message || '読み込みに失敗しました');

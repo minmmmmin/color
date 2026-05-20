@@ -66,7 +66,10 @@ const QuizHistoryPage = () => {
   }, [attempts]);
 
   const byTechnique = useMemo(() => {
-    const map = new Map<string, { name: string; total: number; correct: number }>();
+    const map = new Map<
+      string,
+      { name: string; total: number; correct: number }
+    >();
     for (const a of attempts) {
       const key = a.correct_scheme?.key ?? 'unknown';
       const name = a.correct_scheme?.display_name ?? '(不明)';
