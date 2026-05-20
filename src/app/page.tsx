@@ -162,6 +162,9 @@ const HomePage = () => {
               <Link href="/images" className="btn btn-md">
                 配色イメージ
               </Link>
+              <Link href="/quiz/technique" className="btn btn-accent btn-md">
+                クイズ
+              </Link>
               <Link href="/palettes/new" className="btn btn-secondary btn-md">
                 ＋ 新しく作る
               </Link>
