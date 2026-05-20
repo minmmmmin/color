@@ -1,21 +1,17 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { User } from '@supabase/supabase-js';
-import { Scheme, PaletteColor, PaletteColorDB, Tone } from '@/types/palette';
+import { Scheme, PaletteColor } from '@/types/palette';
 import { createClient } from '@/lib/supabase/client';
-import { isValidHex, hslToHex } from '@/lib/color';
+import { techniquesById } from '@/lib/scheme/techniques';
 
 // Import Components
 import SchemeSelector from '@/components/SchemeSelector';
 import PalettePreviewBar from '@/components/PalettePreviewBar';
-import ToneSelector from '@/components/ToneSelector';
-import HueSlider from '@/components/HueSlider';
-
-const clamp = (num: number, min: number, max: number) =>
-  Math.min(Math.max(num, min), max);
+import PccsToneWheel from '@/components/PccsToneWheel';
 
 const MIN_COLORS = 2;
 const MAX_COLORS = 6;
@@ -50,10 +46,8 @@ const NewPaletteForm: React.FC = () => {
     Array.from({ length: MIN_COLORS }, createDefaultColor),
   );
 
-  // Color Editing State
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [editingTone, setEditingTone] = useState<Tone | null>(null);
-  const [editingHue, setEditingHue] = useState<number>(0);
+  // アクティブスロット (常に1つが選択中)。スウォッチクリックでここに即適用する。
+  const [activeIndex, setActiveIndex] = useState<number>(0);
 
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -105,12 +99,10 @@ const NewPaletteForm: React.FC = () => {
       setSelectedScheme(foundScheme || null);
 
       if (paletteData.palette_colors) {
-        // First, sort the original array safely
         const sortedDbColors = [...paletteData.palette_colors].sort((a, b) =>
           (a.role || '').localeCompare(b.role || ''),
         );
 
-        // Then, map the sorted array to the state shape
         const fetchedColors = sortedDbColors.map((c) => ({
           hex: c.hex,
           h: c.h,
@@ -227,36 +219,31 @@ const NewPaletteForm: React.FC = () => {
     }
   };
 
-  const editingColor = useMemo(() => {
-    if (!editingTone) return { hex: '#808080', h: 0, s: 0, l: 50 };
-    const h = (Math.round(editingHue / 15) * 15) % 360;
-    const s = Math.round((editingTone.s_min + editingTone.s_max) / 2);
-    const l = Math.round((editingTone.l_min + editingTone.l_max) / 2);
-    const hex = hslToHex(h, s, l);
-    return { hex, h, s, l };
-  }, [editingTone, editingHue]);
+  // colors の長さが activeIndex を下回らないようにクランプ
+  useEffect(() => {
+    if (activeIndex >= colors.length) {
+      setActiveIndex(Math.max(0, colors.length - 1));
+    }
+  }, [activeIndex, colors.length]);
 
-  const handleSelectSlot = (index: number) => {
-    setActiveIndex(index);
-    const currentColor = colors[index];
-    setEditingHue(currentColor.h ?? 0);
-    setEditingTone(null);
-  };
+  const activeColor = colors[activeIndex] ?? null;
 
-  const handleSetColor = () => {
-    if (activeIndex === null || !editingTone) return;
-    const newColors = [...colors];
-    newColors[activeIndex] = {
-      ...newColors[activeIndex],
-      hex: editingColor.hex,
-      h: editingColor.h,
-      s: editingColor.s,
-      l: editingColor.l,
-      tone_id: editingTone.id,
-    };
-    setColors(newColors);
-    setActiveIndex(null);
-  };
+  // 選択中の技法の宣言定義(matcher 用)。
+  const currentTechnique = useMemo(() => {
+    if (!selectedScheme) return null;
+    return techniquesById[selectedScheme.key] ?? null;
+  }, [selectedScheme]);
+
+  // 推奨ヒントのアンカー: 最初に色を選んだスロット (tone_id が入った最初の色)。
+  // 編集中のスロット自体はアンカーから除外する(自分自身を基準にしない)。
+  const anchor = useMemo(() => {
+    const idx = colors.findIndex(
+      (c, i) => c.tone_id !== null && i !== activeIndex,
+    );
+    if (idx === -1) return null;
+    const c = colors[idx];
+    return { tone_id: c.tone_id, h: c.h };
+  }, [colors, activeIndex]);
 
   if (isLoading) return <div className="text-center p-12">読み込み中...</div>;
   if (!user)
@@ -291,63 +278,61 @@ const NewPaletteForm: React.FC = () => {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold mb-3">2) 色 (トーンで選ぶ)</h2>
+          <h2 className="text-xl font-semibold mb-3">2) 色</h2>
           <p className="text-sm text-base-content/70 mb-4">
-            下の色スロットを選択して、トーンと色相で色を作成してください。
+            スロットを選び、PCCSトーン図のスウォッチをクリックすると即時反映されます。
           </p>
-          <div className="flex flex-wrap gap-4 mb-8">
+          <div className="flex flex-wrap gap-3 mb-6">
             {colors.map((color, index) => (
-              <div
+              <button
                 key={index}
-                onClick={() => handleSelectSlot(index)}
-                className={`cursor-pointer rounded-lg p-2 border-2 ${activeIndex === index ? 'border-primary' : 'border-base-300'}`}
+                type="button"
+                onClick={() => setActiveIndex(index)}
+                className={`cursor-pointer rounded-lg p-2 border-2 transition-all ${
+                  activeIndex === index
+                    ? 'border-primary ring-2 ring-primary ring-offset-2 scale-105'
+                    : 'border-base-300 hover:border-base-content/30'
+                }`}
+                aria-pressed={activeIndex === index}
               >
                 <div
                   className="w-16 h-16 rounded"
                   style={{ backgroundColor: color.hex }}
-                ></div>
-                <div className="text-xs text-center mt-1 font-mono">
+                />
+                <div className="text-[10px] text-center mt-1 text-base-content/70">
+                  スロット {index + 1}
+                </div>
+                <div className="text-[10px] text-center font-mono">
                   {color.hex}
                 </div>
-              </div>
+              </button>
             ))}
           </div>
-          {activeIndex !== null && (
-            <div className="p-4 border-2 border-primary rounded-lg space-y-6">
-              <h3 className="font-semibold">
-                スロット {activeIndex + 1} の色を編集中...
-              </h3>
-              <div className="grid md:grid-cols-2 gap-8 items-center">
-                <div>
-                  <div
-                    className="flex justify-center items-center w-full h-40 rounded-lg mb-4"
-                    style={{ backgroundColor: editingColor.hex }}
-                  >
-                    <span className="p-2 bg-black/30 text-white rounded font-mono">
-                      {editingColor.hex}
-                    </span>
-                  </div>
-                  <HueSlider hue={editingHue} onHueChange={setEditingHue} />
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">トーンを選択</h4>
-                  <ToneSelector
-                    selectedToneId={editingTone?.id ?? null}
-                    onToneSelect={setEditingTone}
-                  />
-                </div>
-              </div>
-              <div className="text-center">
-                <button
-                  className="btn btn-primary"
-                  onClick={handleSetColor}
-                  disabled={!editingTone}
-                >
-                  この色にする
-                </button>
-              </div>
-            </div>
+
+          {currentTechnique && anchor && (
+            <p className="text-xs text-base-content/60 mb-2">
+              「{currentTechnique.nameJa}
+              」のルールに合う候補をハイライト表示しています(他も自由に選べます)
+            </p>
           )}
+          <PccsToneWheel
+            selectedToneId={activeColor?.tone_id ?? null}
+            selectedHue={activeColor?.h ?? null}
+            anchor={anchor}
+            technique={currentTechnique}
+            onSelect={(sel) => {
+              const newColors = [...colors];
+              newColors[activeIndex] = {
+                ...newColors[activeIndex],
+                hex: sel.hex,
+                h: sel.h,
+                s: sel.s,
+                l: sel.l,
+                tone_id: sel.tone.id,
+              };
+              setColors(newColors);
+            }}
+          />
         </section>
 
         <section>
